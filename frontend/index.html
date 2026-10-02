@@ -1,0 +1,1718 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FININTEL | Financial Intelligence Platform</title>
+    <meta
+      name="description"
+      content="FININTEL brings market data, company financials, indicators, news, sentiment and risk into one analysis platform."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== FININTEL – global styles ===== */
+      :root {
+        --ink: #07080c;
+        --surface: #0f1219;
+        --surface-2: #151924;
+        --line: rgba(255, 255, 255, 0.08);
+        --gold: #e8b84a;
+        --amber: #f59e0b;
+        --text: #f3efe6;
+        --muted: #8a8f9c;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .price,
+      strong,
+      .brand {
+        font-family: "Sora", sans-serif;
+      }
+      a {
+        text-decoration: none;
+      }
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+      }
+
+      /* ===== Background effects ===== */
+      .bg-fx {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(110px);
+        opacity: 0.28;
+      }
+      .b1 {
+        width: 520px;
+        height: 520px;
+        background: var(--amber);
+        top: -160px;
+        right: -120px;
+        animation: drift 18s ease-in-out infinite alternate;
+      }
+      .b2 {
+        width: 460px;
+        height: 460px;
+        background: #1c2a52;
+        bottom: -140px;
+        left: -140px;
+        animation: drift 22s ease-in-out infinite alternate-reverse;
+      }
+      .grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(
+          ellipse at 50% 20%,
+          #000 20%,
+          transparent 70%
+        );
+        opacity: 0.5;
+      }
+      @keyframes drift {
+        to {
+          transform: translate(60px, 40px) scale(1.15);
+        }
+      }
+
+      /* ===== Navbar ===== */
+      .fn-nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+        padding: 0.9rem 0;
+        transition:
+          background 0.4s,
+          backdrop-filter 0.4s,
+          padding 0.4s;
+        animation: navIn 0.8s var(--ease) both;
+      }
+      .fn-nav.scrolled {
+        background: rgba(10, 12, 18, 0.72);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--line);
+        padding: 0.55rem 0;
+      }
+      @keyframes navIn {
+        from {
+          opacity: 0;
+          transform: translateY(-24px);
+        }
+      }
+      .brand {
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 1.15rem;
+      }
+      .brand i {
+        color: var(--gold);
+        margin-right: 0.4rem;
+        text-shadow: 0 0 14px var(--amber);
+      }
+      .fn-nav .nav-link {
+        color: var(--muted);
+        position: relative;
+        padding: 0.5rem 1rem;
+        transition: color 0.3s;
+      }
+      .fn-nav .nav-link::after {
+        content: "";
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 0.2rem;
+        height: 2px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s var(--ease);
+        box-shadow: 0 0 10px var(--amber);
+      }
+      .fn-nav .nav-link:hover,
+      .fn-nav .nav-link.active {
+        color: var(--text);
+      }
+      .fn-nav .nav-link:hover::after,
+      .fn-nav .nav-link.active::after {
+        transform: scaleX(1);
+      }
+      .navbar-toggler {
+        border: 1px solid var(--line);
+        color: var(--text);
+      }
+      .navbar-toggler:focus {
+        box-shadow: none;
+      }
+      @media (max-width: 991px) {
+        .fn-nav .navbar-collapse {
+          background: rgba(15, 18, 25, 0.95);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          margin-top: 0.8rem;
+          padding: 1rem;
+        }
+      }
+
+      /* ===== Buttons ===== */
+      .btn-fin {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: 999px;
+        font-weight: 600;
+        transition:
+          transform 0.3s var(--ease),
+          box-shadow 0.3s,
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .btn-fin i {
+        transition: transform 0.3s var(--ease);
+      }
+      .btn-fin:hover {
+        transform: translateY(-3px);
+      }
+      .btn-fin:hover i {
+        transform: translateX(4px);
+      }
+      .btn-fin:active {
+        transform: translateY(0) scale(0.97);
+      }
+      .btn-gold {
+        background: linear-gradient(135deg, var(--gold), var(--amber));
+        color: #1a1305;
+        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.25);
+      }
+      .btn-gold:hover {
+        color: #1a1305;
+        box-shadow: 0 10px 36px rgba(245, 158, 11, 0.5);
+      }
+      .btn-ghost {
+        border: 1px solid var(--line);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .btn-ghost:hover {
+        color: var(--gold);
+        border-color: rgba(232, 184, 74, 0.5);
+        background: rgba(232, 184, 74, 0.06);
+      }
+      .btn-ghost:hover i {
+        transform: translateY(3px);
+      }
+      .nav-cta {
+        padding: 0.5rem 1.2rem;
+      }
+
+      /* ===== Page-load + scroll reveal ===== */
+      .load {
+        opacity: 0;
+        transform: translateY(26px);
+        animation: rise 0.9s var(--ease) var(--d, 0s) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .reveal,
+      .stagger-item {
+        opacity: 0;
+        transition:
+          opacity 0.9s var(--ease) var(--d, 0s),
+          transform 0.9s var(--ease) var(--d, 0s);
+      }
+      .reveal[data-anim="up"],
+      .stagger-item {
+        transform: translateY(36px);
+      }
+      .reveal[data-anim="down"] {
+        transform: translateY(-36px);
+      }
+      .reveal[data-anim="left"] {
+        transform: translateX(48px);
+      }
+      .reveal[data-anim="right"] {
+        transform: translateX(-48px);
+      }
+      .reveal[data-anim="scale"] {
+        transform: scale(0.94);
+      }
+      .reveal.in,
+      .stagger-item.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ===== Hero ===== */
+      .hero {
+        padding: 9rem 0 4rem;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+      }
+      .hero-tag {
+        display: inline-flex;
+        gap: 0.5rem;
+        align-items: center;
+        color: var(--gold);
+        border: 1px solid rgba(232, 184, 74, 0.3);
+        background: rgba(232, 184, 74, 0.06);
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.88rem;
+        margin-bottom: 1.4rem;
+      }
+      .hero-title {
+        font-size: clamp(2.3rem, 5vw, 3.8rem);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.4rem;
+      }
+      .hero-title .line {
+        display: block;
+        opacity: 0;
+        transform: translateY(40px);
+        animation: rise 1s var(--ease) var(--d) forwards;
+      }
+      .hero-title .line:nth-child(2) {
+        background: linear-gradient(90deg, var(--text), var(--gold));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero-lead {
+        color: var(--muted);
+        font-size: 1.12rem;
+        max-width: 520px;
+        margin-bottom: 2rem;
+        line-height: 1.7;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-top: 1.2rem;
+      }
+
+      /* Hero visual */
+      .visual {
+        position: relative;
+        padding: 1.5rem 0 3rem;
+        transition: translate 0.25s linear;
+      }
+      .panel {
+        background: linear-gradient(
+          160deg,
+          rgba(24, 28, 40, 0.85),
+          rgba(14, 17, 25, 0.85)
+        );
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 1.2rem 1.3rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        transition:
+          border-color 0.4s,
+          transform 0.4s var(--ease),
+          box-shadow 0.4s;
+      }
+      .panel:hover {
+        border-color: rgba(232, 184, 74, 0.35);
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.45),
+          0 0 40px rgba(245, 158, 11, 0.1);
+      }
+      .panel small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-bottom: 0.3rem;
+      }
+      .panel strong {
+        font-size: 1.4rem;
+        display: block;
+      }
+      .gold {
+        color: var(--gold);
+      }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.8rem;
+      }
+      .sym {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      .price {
+        font-size: 2rem;
+      }
+      .chip {
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .chip.up {
+        color: #6fe3a5;
+        background: rgba(111, 227, 165, 0.1);
+      }
+      .chart {
+        width: 100%;
+        height: 190px;
+        display: block;
+        overflow: visible;
+      }
+      .gl line {
+        stroke: var(--line);
+        stroke-dasharray: 3 5;
+      }
+      .line-path {
+        fill: none;
+        stroke: var(--gold);
+        stroke-width: 2.5;
+        stroke-linejoin: round;
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: draw 2.4s var(--ease) 1s forwards;
+      }
+      .area {
+        opacity: 0;
+        animation: fadeIn 1.4s ease 2.2s forwards;
+      }
+      .dots circle {
+        fill: var(--ink);
+        stroke: var(--gold);
+        stroke-width: 2.5;
+        opacity: 0;
+        animation: pop 0.5s var(--ease) forwards;
+      }
+      .dots circle:nth-child(1) {
+        animation-delay: 1.4s;
+      }
+      .dots circle:nth-child(2) {
+        animation-delay: 1.8s;
+      }
+      .dots circle:nth-child(3) {
+        animation-delay: 2.2s;
+      }
+      .dots circle:nth-child(4) {
+        animation-delay: 2.6s;
+      }
+      .dots circle:nth-child(5) {
+        animation-delay: 3s;
+      }
+      @keyframes draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: scale(0);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .dots circle {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      .panel-foot {
+        display: flex;
+        gap: 1rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 0.8rem;
+        align-items: center;
+      }
+      .panel-foot .on {
+        color: var(--gold);
+      }
+      .panel-foot em {
+        margin-left: auto;
+        font-style: normal;
+        border: 1px dashed var(--line);
+        padding: 0.1rem 0.5rem;
+        border-radius: 6px;
+      }
+      .float {
+        position: absolute;
+        min-width: 150px;
+        animation: bob 6s ease-in-out infinite;
+      }
+      .f1 {
+        right: -8px;
+        top: 0;
+      }
+      .f2 {
+        left: -20px;
+        bottom: 0;
+        animation-delay: -2s;
+      }
+      .f3 {
+        right: 30px;
+        bottom: -18px;
+        animation-delay: -4s;
+      }
+      @keyframes bob {
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      .meter {
+        height: 5px;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.08);
+        margin-top: 0.6rem;
+        overflow: hidden;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, var(--amber), var(--gold));
+        border-radius: 9px;
+        transition: width 1.6s var(--ease) 1s;
+      }
+      .in-view .meter i,
+      .visual .meter i,
+      .dash.in .meter i {
+        width: var(--w);
+      }
+      .spark {
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+        height: 22px;
+        margin-top: 0.5rem;
+      }
+      .spark i {
+        width: 6px;
+        border-radius: 3px;
+        background: var(--gold);
+        animation: eq 1.8s ease-in-out infinite;
+      }
+      .spark i:nth-child(1) {
+        height: 40%;
+      }
+      .spark i:nth-child(2) {
+        height: 70%;
+        animation-delay: 0.2s;
+      }
+      .spark i:nth-child(3) {
+        height: 55%;
+        animation-delay: 0.4s;
+      }
+      .spark i:nth-child(4) {
+        height: 90%;
+        animation-delay: 0.6s;
+      }
+      .spark i:nth-child(5) {
+        height: 75%;
+        animation-delay: 0.8s;
+      }
+      @keyframes eq {
+        50% {
+          transform: scaleY(0.55);
+          transform-origin: bottom;
+        }
+      }
+      .orb {
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(245, 158, 11, 0.35),
+          transparent 70%
+        );
+        top: 20%;
+        left: 25%;
+        z-index: -1;
+        filter: blur(30px);
+        animation: pulse 5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        50% {
+          transform: scale(1.2);
+          opacity: 0.6;
+        }
+      }
+
+      /* ===== Feature strip ===== */
+      .strip {
+        padding: 1rem 0 3rem;
+      }
+      .strip-item {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1.1rem 1.2rem;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.025);
+        transition:
+          transform 0.4s var(--ease),
+          border-color 0.4s,
+          box-shadow 0.4s;
+      }
+      .strip-item i {
+        font-size: 1.4rem;
+        color: var(--gold);
+        transition: transform 0.4s var(--ease);
+      }
+      .strip-item:hover {
+        transform: translateY(-5px);
+        border-color: rgba(232, 184, 74, 0.4);
+        box-shadow: 0 14px 40px rgba(245, 158, 11, 0.1);
+      }
+      .strip-item:hover i {
+        transform: scale(1.2) rotate(-6deg);
+      }
+
+      /* ===== Sections ===== */
+      .section {
+        padding: 5.5rem 0;
+      }
+      .h-sec {
+        font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-bottom: 1rem;
+      }
+      .lead-m {
+        color: var(--muted);
+        font-size: 1.08rem;
+        line-height: 1.7;
+      }
+
+      /* Why: many sources merge into one hub */
+      .merge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        padding: 2.2rem;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: linear-gradient(
+          160deg,
+          rgba(24, 28, 40, 0.6),
+          rgba(10, 12, 18, 0.6)
+        );
+      }
+      .sources {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.7rem;
+      }
+      .sources span {
+        padding: 0.55rem 1.1rem;
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-align: center;
+      }
+      .merge-arrow {
+        color: var(--gold);
+        font-size: 1.8rem;
+        animation: nudge 1.6s ease-in-out infinite;
+      }
+      @keyframes nudge {
+        50% {
+          transform: translateX(8px);
+        }
+      }
+      .hub {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        background: radial-gradient(
+          circle,
+          rgba(245, 158, 11, 0.25),
+          rgba(15, 18, 25, 0.9) 70%
+        );
+        border: 1px solid rgba(232, 184, 74, 0.5);
+        box-shadow: 0 0 50px rgba(245, 158, 11, 0.25);
+        animation: pulse 5s ease-in-out infinite;
+      }
+      .hub b {
+        font-family: "Sora";
+        letter-spacing: 0.1em;
+      }
+      .hub small {
+        color: var(--gold);
+      }
+
+      /* Feature cards */
+      .card-f {
+        height: 100%;
+        padding: 1.8rem 1.5rem;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: linear-gradient(160deg, var(--surface-2), var(--surface));
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.5s var(--ease),
+          border-color 0.4s,
+          box-shadow 0.4s;
+      }
+      .card-f::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          240px circle at var(--mx, 50%) var(--my, 0%),
+          rgba(232, 184, 74, 0.14),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .card-f:hover {
+        transform: translateY(-8px);
+        border-color: rgba(232, 184, 74, 0.4);
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          0 0 40px rgba(245, 158, 11, 0.1);
+      }
+      .card-f:hover::before {
+        opacity: 1;
+      }
+      .card-f i {
+        display: inline-grid;
+        place-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 1.3rem;
+        color: var(--gold);
+        background: rgba(232, 184, 74, 0.1);
+        margin-bottom: 1.1rem;
+        transition:
+          transform 0.5s var(--ease),
+          background 0.4s;
+      }
+      .card-f:hover i {
+        transform: rotate(-8deg) scale(1.12);
+        background: rgba(232, 184, 74, 0.2);
+      }
+      .card-f h3 {
+        font-size: 1.08rem;
+        margin-bottom: 0.5rem;
+      }
+      .card-f p {
+        color: var(--muted);
+        font-size: 0.93rem;
+        margin: 0;
+        line-height: 1.6;
+        transition: transform 0.4s var(--ease);
+      }
+      .card-f:hover p {
+        transform: translateX(3px);
+      }
+
+      /* Dashboard preview */
+      .dash {
+        padding: 1.2rem;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+      }
+      .bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 220px;
+      }
+      .bars i {
+        flex: 1;
+        border-radius: 4px 4px 0 0;
+        background: linear-gradient(
+          180deg,
+          var(--gold),
+          rgba(245, 158, 11, 0.15)
+        );
+        height: 0;
+        transition: height 1.2s var(--ease) var(--d, 0s);
+      }
+      .dash.in .bars i {
+        height: var(--h);
+      }
+
+      /* ===== Footer: minimal closing section ===== */
+      .ft {
+        position: relative;
+        overflow: hidden;
+        margin-top: 3rem;
+        padding: 7rem 0 1.5rem;
+        background:
+          radial-gradient(
+            ellipse at 50% 55%,
+            rgba(245, 158, 11, 0.09),
+            transparent 60%
+          ),
+          linear-gradient(180deg, transparent, #04050a 45%);
+      }
+      .ft-graph {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 2.5s ease 0.1s;
+        -webkit-mask-image: radial-gradient(
+          ellipse at 50% 50%,
+          #000 25%,
+          transparent 78%
+        );
+        mask-image: radial-gradient(
+          ellipse at 50% 50%,
+          #000 25%,
+          transparent 78%
+        );
+      }
+      .ft.in .ft-graph {
+        opacity: 0.8;
+      }
+      .ft-gridlines line {
+        stroke: rgba(255, 255, 255, 0.07);
+        stroke-dasharray: 2 8;
+      }
+      .ft-line,
+      .ft-line-glow {
+        fill: none;
+        stroke: url(#ftStroke);
+        stroke-width: 2;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 3.2s var(--ease) 0.4s;
+      }
+      .ft-line-glow {
+        stroke-width: 6;
+        opacity: 0.7;
+      }
+      .ft.in .ft-line,
+      .ft.in .ft-line-glow {
+        stroke-dashoffset: 0;
+      }
+      .ft-dot {
+        fill: var(--gold);
+        filter: drop-shadow(0 0 8px var(--amber))
+          drop-shadow(0 0 16px var(--amber));
+      }
+      .ft-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .ft-particles i {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--gold);
+        opacity: 0;
+        animation: ftFloat var(--t, 12s) ease-in-out var(--dl, 0s) infinite;
+      }
+      @keyframes ftFloat {
+        0% {
+          opacity: 0;
+          transform: translateY(0);
+        }
+        30%,
+        60% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-60px);
+        }
+      }
+      .ft-center {
+        position: relative;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .ft-item {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 1s var(--ease) var(--d, 0s),
+          transform 1s var(--ease) var(--d, 0s),
+          color 0.3s,
+          text-shadow 0.4s;
+      }
+      .ft.in .ft-item {
+        opacity: 1;
+        transform: none;
+      }
+      .ft-mark {
+        color: var(--gold);
+        font-size: 1.3rem;
+        margin-bottom: 0.9rem;
+        text-shadow:
+          0 0 18px var(--amber),
+          0 0 40px rgba(245, 158, 11, 0.6);
+        animation: markPulse 4s ease-in-out infinite;
+      }
+      @keyframes markPulse {
+        50% {
+          text-shadow:
+            0 0 28px var(--amber),
+            0 0 60px rgba(245, 158, 11, 0.8);
+        }
+      }
+      .ft-word {
+        font-family: "Sora", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2.6rem, 8vw, 5.5rem);
+        letter-spacing: 0.18em;
+        line-height: 1;
+        color: var(--text);
+        padding-left: 0.18em;
+        transform: translateY(18px) scale(0.94);
+      }
+      .ft.in .ft-word {
+        transform: none;
+      }
+      .ft-word:hover {
+        color: #fff;
+        text-shadow:
+          0 0 30px rgba(245, 158, 11, 0.55),
+          0 0 70px rgba(245, 158, 11, 0.3);
+      }
+      .ft-tag {
+        margin: 1.3rem 0 0;
+        font-size: 1.05rem;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+      }
+      .ft-rule {
+        display: block;
+        width: min(360px, 70%);
+        height: 1px;
+        margin: 2rem auto 1.8rem;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold),
+          transparent
+        );
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
+        transform: scaleX(0);
+        transition: transform 1.6s var(--ease) 1s;
+      }
+      .ft.in .ft-rule {
+        transform: scaleX(1);
+      }
+      .ft-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem 2.6rem;
+      }
+      .ft-nav a {
+        position: relative;
+        font-size: 0.9rem;
+        color: var(--muted);
+        padding: 0.3rem 0;
+      }
+      .ft-nav a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s var(--ease);
+      }
+      .ft-nav a:hover {
+        color: var(--gold);
+      }
+      .ft-nav a:hover::after {
+        transform: scaleX(1);
+      }
+      .ft-base {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.4rem 1rem;
+        margin-top: 5rem;
+        font-size: 0.78rem;
+        color: rgba(138, 143, 156, 0.7);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ft-item,
+        .ft-graph {
+          opacity: 1;
+          transform: none;
+        }
+        .ft-line,
+        .ft-line-glow {
+          stroke-dashoffset: 0;
+        }
+        .ft-rule {
+          transform: none;
+        }
+        .ft-particles {
+          display: none;
+        }
+      }
+
+      /* ===== Anchor offset for fixed navbar + mobile fixes ===== */
+      section[id] {
+        scroll-margin-top: 80px;
+      }
+      @media (max-width: 575px) {
+        .hero {
+          padding-top: 7rem;
+        }
+        .visual {
+          padding-bottom: 5rem;
+        }
+        .f1 {
+          right: 0;
+          top: -8px;
+        }
+        .f2 {
+          left: 0;
+          bottom: -8px;
+        }
+        .f3 {
+          right: 0;
+          bottom: -30px;
+        }
+        .float {
+          min-width: 120px;
+          padding: 0.8rem 1rem;
+        }
+        .float strong {
+          font-size: 1.1rem;
+        }
+        .sources {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .hub {
+          width: 120px;
+          height: 120px;
+        }
+      }
+
+      /* ===== Reduced motion ===== */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+        .load,
+        .reveal,
+        .stagger-item,
+        .hero-title .line {
+          opacity: 1;
+          transform: none;
+        }
+        .line-path {
+          stroke-dashoffset: 0;
+        }
+        .area,
+        .dots circle {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body data-page="index.html">
+    <div class="bg-fx" aria-hidden="true">
+      <span class="blob b1"></span><span class="blob b2"></span
+      ><span class="grid-lines"></span>
+    </div>
+
+    <!-- NAVBAR (plain HTML so it always renders) -->
+    <nav class="navbar navbar-expand-lg fn-nav">
+      <div class="container">
+        <a class="navbar-brand brand" href="index.html"
+          ><i class="bi bi-hexagon-fill"></i>FININTEL</a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle menu"
+        >
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+            <li class="nav-item">
+              <a class="nav-link active" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#features">Features</a>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="#why">About</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">Login</a>
+            </li>
+            <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+              <a class="btn-fin btn-gold nav-cta" href="analysis.html"
+                >Get Started <i class="bi bi-arrow-right"></i
+              ></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="container">
+          <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+              <p class="hero-tag load" style="--d: 0.2s">
+                <i class="bi bi-activity"></i> Financial Intelligence Platform
+              </p>
+              <h1 class="hero-title">
+                <span class="line load" style="--d: 0.3s"
+                  >Understand the Market.</span
+                >
+                <span class="line load" style="--d: 0.45s"
+                  >Make Data-Driven Decisions.</span
+                >
+              </h1>
+              <p class="hero-lead load" style="--d: 0.6s">
+                Market data, company financials, technical indicators, news,
+                sentiment, risk and economic signals, together with forecasting,
+                in one place instead of six tabs.
+              </p>
+              <div class="d-flex flex-wrap gap-3 load" style="--d: 0.75s">
+                <a href="analysis.html" class="btn-fin btn-gold"
+                  >Explore Analysis <i class="bi bi-arrow-right"></i
+                ></a>
+                <a href="#why" class="btn-fin btn-ghost"
+                  >Learn More <i class="bi bi-arrow-down"></i
+                ></a>
+              </div>
+              <p class="note load" style="--d: 0.9s">
+                Free analysis dashboard. No registration needed.
+              </p>
+            </div>
+
+            <!-- Hero product visual -->
+            <div class="col-lg-6">
+              <div class="visual load" style="--d: 0.5s" data-parallax>
+                <div class="panel main-panel">
+                  <div class="panel-head">
+                    <div>
+                      <span class="sym">SAMPLE · FNTL</span
+                      ><strong class="price"
+                        ><span data-count="1248.6" data-dec="1">0</span></strong
+                      >
+                    </div>
+                    <span class="chip up"
+                      ><i class="bi bi-caret-up-fill"></i>
+                      <span data-count="2.4" data-dec="1">0</span>%</span
+                    >
+                  </div>
+                  <svg
+                    class="chart"
+                    viewBox="0 0 420 190"
+                    preserveAspectRatio="none"
+                    role="img"
+                    aria-label="Sample price chart"
+                  >
+                    <defs>
+                      <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="0"
+                          stop-color="#E8B84A"
+                          stop-opacity=".35"
+                        />
+                        <stop
+                          offset="1"
+                          stop-color="#E8B84A"
+                          stop-opacity="0"
+                        />
+                      </linearGradient>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="3" result="b" />
+                        <feMerge>
+                          <feMergeNode in="b" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <g class="gl">
+                      <line x1="0" y1="47" x2="420" y2="47" />
+                      <line x1="0" y1="95" x2="420" y2="95" />
+                      <line x1="0" y1="143" x2="420" y2="143" />
+                    </g>
+                    <path
+                      class="area"
+                      d="M0 150 L40 135 L80 142 L120 112 L160 120 L200 84 L240 96 L280 62 L320 74 L360 38 L420 26 L420 190 L0 190Z"
+                      fill="url(#area)"
+                    />
+                    <path
+                      class="line-path"
+                      d="M0 150 L40 135 L80 142 L120 112 L160 120 L200 84 L240 96 L280 62 L320 74 L360 38 L420 26"
+                      filter="url(#glow)"
+                    />
+                    <g class="dots">
+                      <circle cx="40" cy="135" r="4" />
+                      <circle cx="120" cy="112" r="4" />
+                      <circle cx="200" cy="84" r="4" />
+                      <circle cx="280" cy="62" r="4" />
+                      <circle cx="360" cy="38" r="4" />
+                    </g>
+                  </svg>
+                  <div class="panel-foot">
+                    <span>1M</span><span>3M</span><span class="on">6M</span
+                    ><span>1Y</span><em>Demo Data</em>
+                  </div>
+                </div>
+                <div class="panel float f1">
+                  <small>RSI (14)</small><strong>58.2</strong>
+                  <div class="meter"><i style="--w: 58%"></i></div>
+                </div>
+                <div class="panel float f2">
+                  <small>Sentiment</small><strong class="gold">Positive</strong
+                  ><span class="spark"
+                    ><i></i><i></i><i></i><i></i><i></i
+                  ></span>
+                </div>
+                <div class="panel float f3">
+                  <small>Risk level</small><strong>Moderate</strong>
+                  <div class="meter"><i style="--w: 46%"></i></div>
+                </div>
+                <span class="orb"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURE STRIP -->
+      <section class="strip">
+        <div class="container">
+          <div class="row g-3">
+            <div class="col-6 col-lg-3 reveal" data-anim="up">
+              <div class="strip-item">
+                <i class="bi bi-bar-chart-line"></i><b>Market Data</b>
+              </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal" data-anim="up" style="--d: 0.1s">
+              <div class="strip-item">
+                <i class="bi bi-graph-up-arrow"></i><b>Technical Analysis</b>
+              </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal" data-anim="up" style="--d: 0.2s">
+              <div class="strip-item">
+                <i class="bi bi-file-earmark-bar-graph"></i
+                ><b>Financial Insights</b>
+              </div>
+            </div>
+            <div class="col-6 col-lg-3 reveal" data-anim="up" style="--d: 0.3s">
+              <div class="strip-item">
+                <i class="bi bi-shield-check"></i><b>Risk Analysis</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WHY -->
+      <section class="section" id="why">
+        <div class="container">
+          <div class="row g-5 align-items-center">
+            <div class="col-lg-5 reveal" data-anim="right">
+              <h2 class="h-sec">One question shouldn't need six platforms.</h2>
+              <p class="lead-m">
+                Understanding a company today means checking prices in one
+                place, financials in another, then news, indicators, economic
+                data and risk somewhere else. FININTEL brings those signals
+                together so you can see the whole picture.
+              </p>
+            </div>
+            <div class="col-lg-7 reveal" data-anim="left">
+              <div class="merge">
+                <div class="sources">
+                  <span>Prices</span><span>Financials</span
+                  ><span>Indicators</span><span>News</span><span>Economy</span
+                  ><span>Risk</span>
+                </div>
+                <div class="merge-arrow">
+                  <i class="bi bi-chevron-double-right"></i>
+                </div>
+                <div class="hub"><b>FININTEL</b><small>One view</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="section" id="features">
+        <div class="container">
+          <div class="text-center mb-5 reveal" data-anim="up">
+            <h2 class="h-sec">Everything you need to read the market</h2>
+            <p class="lead-m mx-auto" style="max-width: 560px">
+              Eight tools, one workspace.
+            </p>
+          </div>
+          <div class="row g-4" data-stagger>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-graph-up"></i>
+                <h3>Market Data</h3>
+                <p>
+                  Historical prices, volume and trends for the stocks you
+                  follow.
+                </p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-sliders"></i>
+                <h3>Technical Indicators</h3>
+                <p>
+                  RSI, MACD and moving averages explained alongside the chart.
+                </p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-building"></i>
+                <h3>Company Financials</h3>
+                <p>Revenue, profit and key ratios in plain, comparable form.</p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-newspaper"></i>
+                <h3>Financial News</h3>
+                <p>Headlines relevant to the company you are analysing.</p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-chat-square-text"></i>
+                <h3>Sentiment Analysis</h3>
+                <p>See whether coverage leans positive, neutral or negative.</p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-shield-exclamation"></i>
+                <h3>Risk Analysis</h3>
+                <p>
+                  Volatility and drawdown measures summarised as a risk level.
+                </p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-globe2"></i>
+                <h3>Economic Indicators</h3>
+                <p>Inflation, rates and growth context behind market moves.</p>
+              </article>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <article class="card-f">
+                <i class="bi bi-stars"></i>
+                <h3>Forecasting</h3>
+                <p>
+                  Model-based projections for registered users, for research
+                  only.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYSIS PREVIEW -->
+      <section class="section">
+        <div class="container">
+          <div class="text-center mb-5 reveal" data-anim="up">
+            <h2 class="h-sec">A look inside the analysis dashboard</h2>
+            <p class="lead-m mx-auto" style="max-width: 560px">
+              Everything below is Demo Data, shown to illustrate the layout.
+            </p>
+          </div>
+          <div class="dash reveal" data-anim="scale">
+            <div class="row g-3">
+              <div class="col-lg-8">
+                <div class="panel h-100">
+                  <div class="panel-head">
+                    <div>
+                      <span class="sym">SAMPLE · FNTL</span
+                      ><strong class="price"
+                        >$<span data-count="1248.6" data-dec="1"
+                          >0</span
+                        ></strong
+                      >
+                    </div>
+                    <span class="chip up"
+                      ><i class="bi bi-caret-up-fill"></i> 2.4%</span
+                    >
+                  </div>
+                  <div class="bars" aria-hidden="true"></div>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="row g-3">
+                  <div class="col-6 col-lg-12">
+                    <div class="panel">
+                      <small>RSI (14)</small
+                      ><strong
+                        ><span data-count="58.2" data-dec="1">0</span></strong
+                      >
+                      <div class="meter"><i style="--w: 58%"></i></div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-lg-12">
+                    <div class="panel">
+                      <small>MACD</small
+                      ><strong class="gold">Bullish cross</strong>
+                      <div class="meter"><i style="--w: 70%"></i></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="panel">
+                  <small>P/E ratio</small
+                  ><strong
+                    ><span data-count="21.4" data-dec="1">0</span></strong
+                  >
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="panel">
+                  <small>Revenue growth</small
+                  ><strong><span data-count="12" data-dec="0">0</span>%</strong>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="panel">
+                  <small>Sentiment</small><strong class="gold">Positive</strong>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="panel">
+                  <small>Risk</small><strong>Moderate</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="text-center mt-5">
+            <a href="analysis.html" class="btn-fin btn-gold"
+              >Explore Analysis <i class="bi bi-arrow-right"></i
+            ></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER: minimal closing section -->
+    <footer class="ft">
+      <!-- Decorative graph only (not real data) -->
+      <svg
+        class="ft-graph"
+        viewBox="0 0 1200 300"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="ftStroke" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#E8B84A" stop-opacity="0" />
+            <stop offset=".35" stop-color="#E8B84A" stop-opacity=".9" />
+            <stop offset="1" stop-color="#F59E0B" stop-opacity="0" />
+          </linearGradient>
+          <filter id="ftBlur"><feGaussianBlur stdDeviation="4" /></filter>
+        </defs>
+        <g class="ft-gridlines">
+          <line x1="0" y1="75" x2="1200" y2="75" />
+          <line x1="0" y1="150" x2="1200" y2="150" />
+          <line x1="0" y1="225" x2="1200" y2="225" />
+        </g>
+        <path
+          id="ftPath"
+          class="ft-line-glow"
+          d="M0 250 C110 240 170 190 270 200 S430 130 530 150 S710 70 830 100 S1030 45 1200 25"
+          pathLength="1"
+          filter="url(#ftBlur)"
+        />
+        <path
+          class="ft-line"
+          d="M0 250 C110 240 170 190 270 200 S430 130 530 150 S710 70 830 100 S1030 45 1200 25"
+          pathLength="1"
+        />
+        <circle class="ft-dot" r="5">
+          <animateMotion dur="10s" repeatCount="indefinite" calcMode="linear">
+            <mpath href="#ftPath" />
+          </animateMotion>
+          <animate
+            attributeName="opacity"
+            values="0;1;1;0"
+            keyTimes="0;.1;.85;1"
+            dur="10s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      </svg>
+      <div class="ft-particles" aria-hidden="true"></div>
+
+      <div class="container ft-center">
+        <i
+          class="bi bi-hexagon-fill ft-mark ft-item"
+          style="--d: 0.3s"
+          aria-hidden="true"
+        ></i>
+        <a class="ft-word ft-item" style="--d: 0.4s" href="index.html"
+          >FININTEL</a
+        >
+        <p class="ft-tag ft-item" style="--d: 0.7s">
+          See the market differently.
+        </p>
+        <span class="ft-rule" aria-hidden="true"></span>
+        <nav class="ft-nav" aria-label="Footer">
+          <a class="ft-item" style="--d: 1.5s" href="index.html">Home</a>
+          <a class="ft-item" style="--d: 1.65s" href="#features">Features</a>
+          <a class="ft-item" style="--d: 1.8s" href="#why">About</a>
+          <a class="ft-item" style="--d: 1.95s" href="analysis.html"
+            >Analysis</a
+          >
+          <a class="ft-item" style="--d: 2.1s" href="login.html">Login</a>
+        </nav>
+      </div>
+
+      <div class="container ft-base">
+        <span>&copy; 2026 FININTEL</span>
+        <span>Research &amp; analysis platform</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      /* ===== FININTEL – Home Page behaviour =====
+   Navbar and footer are plain HTML; this file only adds motion. */
+
+      /* ---- 2. Navbar background on scroll ---- */
+      function initNavbarScroll() {
+        const nav = document.querySelector(".fn-nav");
+        if (!nav) return;
+        const update = () =>
+          nav.classList.toggle("scrolled", window.scrollY > 20);
+        update();
+        window.addEventListener("scroll", update, { passive: true });
+      }
+
+      /* ---- 3. Scroll reveal (IntersectionObserver) ---- */
+      function initReveal() {
+        // Give grid children a staggered delay
+        document.querySelectorAll("[data-stagger]").forEach((group) => {
+          group.querySelectorAll(":scope > *").forEach((el, i) => {
+            el.classList.add("stagger-item");
+            el.style.setProperty("--d", `${i * 0.08}s`);
+          });
+        });
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add("in");
+                obs.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
+        );
+        document
+          .querySelectorAll(".reveal, .stagger-item")
+          .forEach((el) => io.observe(el));
+      }
+
+      /* ---- 4. Number counters (start when visible) ---- */
+      function initCounters() {
+        const run = (el) => {
+          const target = parseFloat(el.dataset.count),
+            dec = +el.dataset.dec || 0,
+            dur = 1800;
+          const t0 = performance.now();
+          const tick = (now) => {
+            const p = Math.min((now - t0) / dur, 1),
+              eased = 1 - Math.pow(1 - p, 4);
+            el.textContent = (target * eased).toLocaleString("en-US", {
+              minimumFractionDigits: dec,
+              maximumFractionDigits: dec,
+            });
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        };
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                run(e.target);
+                obs.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+        document
+          .querySelectorAll("[data-count]")
+          .forEach((el) => io.observe(el));
+      }
+
+      /* ---- 5. Demo bar chart in the dashboard preview ---- */
+      function initBars() {
+        const box = document.querySelector(".bars");
+        if (!box) return;
+        const heights = [
+          38, 45, 40, 52, 48, 60, 55, 66, 58, 70, 64, 76, 72, 82, 78, 88, 84,
+          92,
+        ];
+        box.innerHTML = heights
+          .map((h, i) => `<i style="--h:${h}%;--d:${i * 0.05}s"></i>`)
+          .join("");
+      }
+
+      /* ---- 6. Gentle mouse parallax + card spotlight ---- */
+      function initParallax() {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const el = document.querySelector("[data-parallax]");
+        if (el && window.innerWidth > 991) {
+          window.addEventListener("mousemove", (e) => {
+            const x = (e.clientX / innerWidth - 0.5) * 14,
+              y = (e.clientY / innerHeight - 0.5) * 14;
+            el.style.translate = `${x}px ${y}px`; // 'translate' is separate from 'transform', so the load animation can't cancel it
+          });
+        }
+        document.querySelectorAll(".card-f").forEach((card) => {
+          card.addEventListener("mousemove", (e) => {
+            const r = card.getBoundingClientRect();
+            card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+            card.style.setProperty("--my", `${e.clientY - r.top}px`);
+          });
+        });
+      }
+
+      /* ---- Footer: reveal, particles, travelling point ---- */
+      function initFooter() {
+        const ft = document.querySelector(".ft");
+        if (!ft) return;
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const svg = ft.querySelector(".ft-graph");
+        // Tiny floating particles (decorative)
+        const box = ft.querySelector(".ft-particles");
+        if (!reduce && box) {
+          for (let i = 0; i < 16; i++) {
+            const p = document.createElement("i");
+            p.style.left = `${Math.random() * 100}%`;
+            p.style.top = `${30 + Math.random() * 60}%`;
+            p.style.setProperty("--t", `${9 + Math.random() * 8}s`);
+            p.style.setProperty("--dl", `${Math.random() * 8}s`);
+            box.appendChild(p);
+          }
+        }
+        // Hold the moving point until the footer is visible
+        if (svg && svg.pauseAnimations) svg.pauseAnimations();
+        new IntersectionObserver(
+          (entries, obs) => {
+            if (!entries[0].isIntersecting) return;
+            ft.classList.add("in");
+            if (svg && svg.unpauseAnimations && !reduce)
+              svg.unpauseAnimations();
+            obs.unobserve(ft);
+          },
+          { threshold: 0.25 },
+        ).observe(ft);
+      }
+
+      /* ---- Start everything ---- */
+      document.addEventListener("DOMContentLoaded", () => {
+        initNavbarScroll();
+        initBars();
+        initReveal();
+        initCounters();
+        initParallax();
+        initFooter();
+      });
+    </script>
+  </body>
+</html>
