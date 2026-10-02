@@ -26,3 +26,6 @@ Home
 - FinBERT
 - SHAP
 - Power BI
+
+## To Active venv
+venv\Scripts\activate
