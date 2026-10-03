@@ -29,3 +29,6 @@ Home
 
 ## To Active venv
 venv\Scripts\activate
+
+## Start FastAPI
+uvicorn main:app --reload
