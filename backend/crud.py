@@ -1,9 +1,9 @@
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import FinancialStatement, PriceHistory, Stock, TechnicalIndicator
+from models import FinancialStatement, News, PriceHistory, Stock, TechnicalIndicator
 
 
 def _clean_symbol(symbol: str) -> str:
@@ -186,3 +186,47 @@ def get_financial_history(db: Session, stock_id: int, limit: int = 10) -> List[F
     rows = list(db.execute(statement).scalars().all())
     rows.reverse()
     return rows
+
+
+
+# ---------- news ----------
+def add_news_items(db: Session, stock_id: int, items: list) -> int:
+    """Insert only articles whose URL is not stored yet for this stock. Returns how many were added."""
+    statement = select(News.url).where(News.stock_id == stock_id)
+    existing = set(db.execute(statement).scalars().all())
+
+    new_rows = []
+    for item in items:
+        if item.url in existing:
+            continue
+        existing.add(item.url)  # also protects against duplicates inside `items`
+        new_rows.append(
+            News(
+                stock_id=stock_id,
+                title=item.title,
+                description=item.description,
+                source=item.source[:150] if item.source else None,  # column is String(150)
+                url=item.url,
+                published_at=item.published_at,  # UTC, no timezone
+            )
+        )
+    db.add_all(new_rows)
+    db.commit()
+    return len(new_rows)
+
+
+def count_news(db: Session, stock_id: int) -> int:
+    """How many articles are stored for this stock."""
+    statement = select(func.count()).select_from(News).where(News.stock_id == stock_id)
+    return db.execute(statement).scalar_one()
+
+
+def get_news(db: Session, stock_id: int, limit: int = 50) -> List[News]:
+    """Latest `limit` articles, newest first."""
+    statement = (
+        select(News)
+        .where(News.stock_id == stock_id)
+        .order_by(News.published_at.desc())
+        .limit(limit)
+    )
+    return list(db.execute(statement).scalars().all())
