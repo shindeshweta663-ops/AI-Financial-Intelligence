@@ -1,104 +1,429 @@
-import time
-from datetime import date, datetime, timedelta, timezone
+﻿from datetime import date, datetime
 from typing import List, Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from config import settings
-from market_data import MarketDataError, _get_json
+from crud import (
+    count_news,
+    get_financial_history,
+    get_indicator_history,
+    get_news,
+    get_price_history,
+    get_stock_by_symbol,
+    list_stocks,
+    search_stocks,
+)
+from database import get_db
+from market_data import MarketDataError, Quote, get_latest_quote
 
-FINNHUB_NEWS_URL = "https://finnhub.io/api/v1/company-news"
 
-# Finnhub returns at most about 250 articles per request (newest first).
-# If a request comes back close to that size, older articles were probably
-# cut off, so we split the date range in two and ask again.
-TRUNCATION_LIMIT = 240
-PAUSE_SECONDS = 1.1  # stay inside Finnhub's 60 calls per minute
+router = APIRouter(
+    prefix="/api/stocks",
+    tags=["Stocks"],
+)
 
 
-class NewsItem(BaseModel):
+# ============================================================
+# RESPONSE MODELS
+# ============================================================
+
+class StockOut(BaseModel):
+    symbol: str
+    company_name: Optional[str] = None
+    exchange: Optional[str] = None
+    sector: Optional[str] = None
+    industry: Optional[str] = None
+
+
+class PriceBarOut(BaseModel):
+    date: datetime
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    volume: Optional[int] = None
+
+
+class StockDetailOut(BaseModel):
+    stock: StockOut
+    latest_price: Optional[PriceBarOut] = None
+    data_source: str = "Stored daily prices (PostgreSQL)"
+
+
+class HistoryOut(BaseModel):
+    symbol: str
+    count: int
+    data_source: str = "Stored daily prices (PostgreSQL)"
+    prices: List[PriceBarOut]
+
+
+class IndicatorPointOut(BaseModel):
+    date: datetime
+    sma20: Optional[float] = None
+    ema20: Optional[float] = None
+    ema50: Optional[float] = None
+    rsi: Optional[float] = None
+    macd: Optional[float] = None
+    macd_signal: Optional[float] = None
+    volatility: Optional[float] = None
+
+
+class TechnicalOut(BaseModel):
+    symbol: str
+    count: int
+    data_type: str = "Calculated from stored daily closing prices"
+    note: str = (
+        "Indicators describe past prices. They are not predictions "
+        "or investment advice. Volatility is annualized, in percent."
+    )
+    indicators: List[IndicatorPointOut]
+
+
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+def _num(value) -> Optional[float]:
+    """Convert database numeric values to float."""
+    return float(value) if value is not None else None
+
+
+def _stock_out(stock) -> StockOut:
+    """Convert a database Stock object to StockOut."""
+    return StockOut(
+        symbol=stock.symbol,
+        company_name=stock.company_name,
+        exchange=stock.exchange,
+        sector=stock.sector,
+        industry=stock.industry,
+    )
+
+
+def _bar_out(row) -> PriceBarOut:
+    """Convert a database price row to PriceBarOut."""
+    return PriceBarOut(
+        date=row.date,
+        open=_num(row.open_price),
+        high=_num(row.high_price),
+        low=_num(row.low_price),
+        close=_num(row.close_price),
+        volume=row.volume,
+    )
+
+
+def _get_stock_or_404(db: Session, symbol: str):
+    """Find a stock by symbol or return HTTP 404."""
+    stock = get_stock_by_symbol(db, symbol)
+
+    if not stock:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Stock '{symbol.upper()}' is not tracked",
+        )
+
+    return stock
+
+
+# ============================================================
+# STOCK ENDPOINTS
+# ============================================================
+
+@router.get(
+    "",
+    response_model=List[StockOut],
+)
+def get_stocks(
+    q: Optional[str] = Query(
+        None,
+        description="Search by symbol or company name",
+    ),
+    limit: int = Query(
+        100,
+        ge=1,
+        le=500,
+    ),
+    db: Session = Depends(get_db),
+):
+    """List tracked stocks or search them using ?q=."""
+
+    stocks = (
+        search_stocks(db, q, limit)
+        if q
+        else list_stocks(db, limit=limit)
+    )
+
+    return [_stock_out(stock) for stock in stocks]
+
+
+@router.get(
+    "/{symbol}",
+    response_model=StockDetailOut,
+)
+def get_stock(
+    symbol: str,
+    db: Session = Depends(get_db),
+):
+    """Return stock details and latest stored daily price."""
+
+    stock = _get_stock_or_404(db, symbol)
+
+    rows = get_price_history(
+        db,
+        stock.stock_id,
+        limit=1,
+    )
+
+    return StockDetailOut(
+        stock=_stock_out(stock),
+        latest_price=_bar_out(rows[-1]) if rows else None,
+    )
+
+
+@router.get(
+    "/{symbol}/history",
+    response_model=HistoryOut,
+)
+def get_stock_history(
+    symbol: str,
+    limit: int = Query(
+        365,
+        ge=1,
+        le=1500,
+        description="Number of latest trading days",
+    ),
+    db: Session = Depends(get_db),
+):
+    """Return daily OHLCV prices, oldest first."""
+
+    stock = _get_stock_or_404(db, symbol)
+
+    rows = get_price_history(
+        db,
+        stock.stock_id,
+        limit=limit,
+    )
+
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No price history stored for {stock.symbol} yet",
+        )
+
+    return HistoryOut(
+        symbol=stock.symbol,
+        count=len(rows),
+        prices=[_bar_out(row) for row in rows],
+    )
+
+
+# ============================================================
+# LIVE QUOTE ENDPOINT
+# ============================================================
+
+@router.get(
+    "/{symbol}/quote",
+    response_model=Quote,
+)
+def get_stock_quote(
+    symbol: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Get a LIVE stock quote.
+
+    Twelve Data is used as the primary source.
+    Finnhub can be used as a backup depending on market_data.py.
+    """
+
+    stock = _get_stock_or_404(db, symbol)
+
+    try:
+        return get_latest_quote(stock.symbol)
+
+    except MarketDataError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=str(error),
+        )
+
+
+# ============================================================
+# TECHNICAL INDICATORS
+# ============================================================
+
+@router.get(
+    "/{symbol}/technical",
+    response_model=TechnicalOut,
+)
+def get_stock_technical(
+    symbol: str,
+    limit: int = Query(
+        250,
+        ge=1,
+        le=1500,
+        description="Number of latest trading days",
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Return stored technical indicators.
+
+    Indicators:
+    - SMA20
+    - EMA20
+    - EMA50
+    - RSI(14)
+    - MACD(12,26,9)
+    - 20-day volatility
+    """
+
+    stock = _get_stock_or_404(db, symbol)
+
+    rows = get_indicator_history(
+        db,
+        stock.stock_id,
+        limit=limit,
+    )
+
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No indicators stored for {stock.symbol} yet",
+        )
+
+    return TechnicalOut(
+        symbol=stock.symbol,
+        count=len(rows),
+        indicators=[
+            IndicatorPointOut(
+                date=row.date,
+                sma20=_num(row.sma20),
+                ema20=_num(row.ema20),
+                ema50=_num(row.ema50),
+                rsi=_num(row.rsi),
+                macd=_num(row.macd),
+                macd_signal=_num(row.macd_signal),
+                volatility=_num(row.volatility),
+            )
+            for row in rows
+        ],
+    )
+
+
+# ============================================================
+# COMPANY FINANCIALS
+# ============================================================
+
+class FinancialPointOut(BaseModel):
+    report_date: date
+    revenue: Optional[float] = None
+    net_profit: Optional[float] = None
+    total_assets: Optional[float] = None
+    total_debt: Optional[float] = None
+    eps: Optional[float] = None
+    profit_margin: Optional[float] = None
+
+
+class FinancialsOut(BaseModel):
+    symbol: str
+    count: int
+    currency: str = "USD"
+    data_type: str = "Reported annual figures (10-K filings) via Finnhub"
+    note: str = (
+        "Figures are as reported by the company. profit_margin is calculated "
+        "as net_profit / revenue x 100 (percent). total_debt is an approximation "
+        "of interest-bearing borrowings from the main balance sheet lines. "
+        "Empty values mean the item was not found, not zero."
+    )
+    statements: List[FinancialPointOut]
+
+
+@router.get("/{symbol}/financials", response_model=FinancialsOut)
+def get_stock_financials(
+    symbol: str,
+    limit: int = Query(10, ge=1, le=30, description="Number of latest annual reports"),
+    db: Session = Depends(get_db),
+):
+    """Annual financial statement summary, oldest first."""
+    stock = _get_stock_or_404(db, symbol)
+    rows = get_financial_history(db, stock.stock_id, limit=limit)
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No financial statements stored for {stock.symbol} yet",
+        )
+    return FinancialsOut(
+        symbol=stock.symbol,
+        count=len(rows),
+        statements=[
+            FinancialPointOut(
+                report_date=r.report_date,
+                revenue=_num(r.revenue),
+                net_profit=_num(r.net_profit),
+                total_assets=_num(r.total_assets),
+                total_debt=_num(r.total_debt),
+                eps=_num(r.eps),
+                profit_margin=_num(r.profit_margin),
+            )
+            for r in rows
+        ],
+    )
+
+
+# ============================================================
+# COMPANY NEWS
+# ============================================================
+
+class NewsArticleOut(BaseModel):
     title: str
     description: Optional[str] = None
     source: Optional[str] = None
     url: str
-    published_at: datetime  # UTC, stored without timezone info
+    published_at: datetime  # UTC
 
 
-def _fetch_range(symbol: str, start: date, end: date) -> List[NewsItem]:
-    """One Finnhub request for start..end (inclusive). Newest first, no duplicate URLs."""
-    if not settings.finnhub_api_key:
-        raise MarketDataError("FINNHUB_API_KEY is not set in .env")
-
-    data = _get_json(
-        FINNHUB_NEWS_URL,
-        {
-            "symbol": symbol,
-            "from": start.isoformat(),
-            "to": end.isoformat(),
-            "token": settings.finnhub_api_key,
-        },
-        "Finnhub",
+class NewsOut(BaseModel):
+    symbol: str
+    count: int
+    total_stored: int
+    data_source: str = "Company news via Finnhub, stored in PostgreSQL"
+    time_note: str = "published_at is in UTC."
+    note: str = (
+        "Articles are returned newest first. Finnhub tags any article that "
+        "mentions the company, so some items are only loosely related. "
+        "Headlines are not investment advice."
     )
+    articles: List[NewsArticleOut]
 
-    if not isinstance(data, list):
-        raise MarketDataError(f"Finnhub returned an unexpected news format for {symbol}")
 
-    items: List[NewsItem] = []
-    seen_urls = set()
-    for row in data:
-        title = (row.get("headline") or "").strip()
-        url = (row.get("url") or "").strip()
-        timestamp = row.get("datetime")
-        if not title or not url or not timestamp or url in seen_urls:
-            continue  # skip incomplete or duplicate articles
-        seen_urls.add(url)
-
-        published = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).replace(tzinfo=None)
-        summary = (row.get("summary") or "").strip()
-        items.append(
-            NewsItem(
-                title=title,
-                description=summary or None,
-                source=(row.get("source") or None),
-                url=url,
-                published_at=published,
+@router.get("/{symbol}/news", response_model=NewsOut)
+def get_stock_news(
+    symbol: str,
+    limit: int = Query(20, ge=1, le=200, description="Number of latest articles"),
+    db: Session = Depends(get_db),
+):
+    """Latest stored company news, newest first."""
+    stock = _get_stock_or_404(db, symbol)
+    rows = get_news(db, stock.stock_id, limit=limit)
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No news stored for {stock.symbol} yet",
+        )
+    return NewsOut(
+        symbol=stock.symbol,
+        count=len(rows),
+        total_stored=count_news(db, stock.stock_id),
+        articles=[
+            NewsArticleOut(
+                title=r.title,
+                description=r.description,
+                source=r.source,
+                url=r.url,
+                published_at=r.published_at,
             )
-        )
-
-    items.sort(key=lambda item: item.published_at, reverse=True)
-    return items
-
-
-def get_company_news(symbol: str, days: int = 30) -> List[NewsItem]:
-    """Single request for the last `days` days (used by test_news.py)."""
-    today = date.today()
-    return _fetch_range(symbol.strip().upper(), today - timedelta(days=days), today)
-
-
-def _fetch_split(symbol: str, start: date, end: date) -> List[NewsItem]:
-    """Fetch a range; if it looks truncated, split it in half and fetch both halves."""
-    items = _fetch_range(symbol, start, end)
-    time.sleep(PAUSE_SECONDS)
-    if len(items) >= TRUNCATION_LIMIT and start < end:
-        middle = start + (end - start) // 2
-        return _fetch_split(symbol, start, middle) + _fetch_split(
-            symbol, middle + timedelta(days=1), end
-        )
-    return items
-
-
-def get_company_news_history(symbol: str, days: int = 30, window_days: int = 7) -> List[NewsItem]:
-    """News for the last `days` days, fetched in small windows so nothing is cut off."""
-    symbol = symbol.strip().upper()
-    today = date.today()
-    first_day = today - timedelta(days=days)
-
-    by_url = {}
-    window_end = today
-    while window_end >= first_day:
-        window_start = max(first_day, window_end - timedelta(days=window_days - 1))
-        for item in _fetch_split(symbol, window_start, window_end):
-            by_url.setdefault(item.url, item)
-        window_end = window_start - timedelta(days=1)
-
-    return sorted(by_url.values(), key=lambda item: item.published_at, reverse=True)
+            for r in rows
+        ],
+    )
