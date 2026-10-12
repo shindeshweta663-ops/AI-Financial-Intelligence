@@ -1,4 +1,5 @@
-﻿from datetime import date, datetime
+﻿from collections import defaultdict
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,8 +10,9 @@ from crud import (
     count_news,
     get_financial_history,
     get_indicator_history,
-    get_news,
+    get_news_with_sentiment,
     get_price_history,
+    get_scored_news,
     get_stock_by_symbol,
     list_stocks,
     search_stocks,
@@ -373,8 +375,15 @@ def get_stock_financials(
 
 
 # ============================================================
-# COMPANY NEWS
+# COMPANY NEWS (with optional FinBERT sentiment)
 # ============================================================
+
+class SentimentOut(BaseModel):
+    label: Optional[str] = None
+    positive: Optional[float] = None
+    neutral: Optional[float] = None
+    negative: Optional[float] = None
+
 
 class NewsArticleOut(BaseModel):
     title: str
@@ -382,20 +391,36 @@ class NewsArticleOut(BaseModel):
     source: Optional[str] = None
     url: str
     published_at: datetime  # UTC
+    sentiment: Optional[SentimentOut] = None  # null if not scored yet
 
 
 class NewsOut(BaseModel):
     symbol: str
     count: int
     total_stored: int
+    scored_in_response: int
     data_source: str = "Company news via Finnhub, stored in PostgreSQL"
     time_note: str = "published_at is in UTC."
     note: str = (
         "Articles are returned newest first. Finnhub tags any article that "
         "mentions the company, so some items are only loosely related. "
-        "Headlines are not investment advice."
+        "Sentiment comes from the FinBERT model applied to the headline and "
+        "description only (not the full article); it is null when an article "
+        "has not been scored yet. Headlines are not investment advice."
     )
     articles: List[NewsArticleOut]
+
+
+def _sentiment_out(row) -> Optional[SentimentOut]:
+    """Convert a news_sentiment row to SentimentOut, or None if unscored."""
+    if row is None:
+        return None
+    return SentimentOut(
+        label=row.sentiment,
+        positive=_num(row.positive_score),
+        neutral=_num(row.neutral_score),
+        negative=_num(row.negative_score),
+    )
 
 
 @router.get("/{symbol}/news", response_model=NewsOut)
@@ -404,26 +429,154 @@ def get_stock_news(
     limit: int = Query(20, ge=1, le=200, description="Number of latest articles"),
     db: Session = Depends(get_db),
 ):
-    """Latest stored company news, newest first."""
+    """Latest stored company news with stored sentiment, newest first."""
     stock = _get_stock_or_404(db, symbol)
-    rows = get_news(db, stock.stock_id, limit=limit)
-    if not rows:
+    pairs = get_news_with_sentiment(db, stock.stock_id, limit=limit)
+    if not pairs:
         raise HTTPException(
             status_code=404,
             detail=f"No news stored for {stock.symbol} yet",
         )
+    articles = [
+        NewsArticleOut(
+            title=news.title,
+            description=news.description,
+            source=news.source,
+            url=news.url,
+            published_at=news.published_at,
+            sentiment=_sentiment_out(sent),
+        )
+        for news, sent in pairs
+    ]
     return NewsOut(
         symbol=stock.symbol,
-        count=len(rows),
+        count=len(articles),
         total_stored=count_news(db, stock.stock_id),
-        articles=[
-            NewsArticleOut(
-                title=r.title,
-                description=r.description,
-                source=r.source,
-                url=r.url,
-                published_at=r.published_at,
-            )
-            for r in rows
-        ],
+        scored_in_response=sum(1 for a in articles if a.sentiment is not None),
+        articles=articles,
+    )
+
+
+# ============================================================
+# SENTIMENT SUMMARY
+# ============================================================
+
+NET_SCORE_THRESHOLD = 0.10  # this project's own labelling rule, NOT part of FinBERT
+
+
+class SentimentSummaryOut(BaseModel):
+    article_count: int
+    positive_count: int
+    neutral_count: int
+    negative_count: int
+    avg_positive: Optional[float] = None
+    avg_neutral: Optional[float] = None
+    avg_negative: Optional[float] = None
+    net_score: Optional[float] = None
+    overall_label: str
+
+
+class SentimentDayOut(BaseModel):
+    day: date
+    article_count: int
+    net_score: float
+
+
+class SentimentSummaryResponse(BaseModel):
+    symbol: str
+    window_days: int
+    summary: SentimentSummaryOut
+    daily_trend: List[SentimentDayOut]
+    recent_articles: List[NewsArticleOut]
+    note: str
+
+
+def _overall_label(net_score: Optional[float]) -> str:
+    if net_score is None:
+        return "no data"
+    if net_score >= NET_SCORE_THRESHOLD:
+        return "positive"
+    if net_score <= -NET_SCORE_THRESHOLD:
+        return "negative"
+    return "neutral"
+
+
+@router.get("/{symbol}/sentiment", response_model=SentimentSummaryResponse)
+def get_stock_sentiment(
+    symbol: str,
+    days: int = Query(30, ge=1, le=365, description="Look-back window in days"),
+    articles: int = Query(5, ge=0, le=50, description="Recent articles to include"),
+    db: Session = Depends(get_db),
+):
+    """Sentiment summary from stored FinBERT scores. No model runs here."""
+    stock = _get_stock_or_404(db, symbol)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    pairs = get_scored_news(db, stock.stock_id, since=since)
+
+    pos_sum = neu_sum = neg_sum = 0.0
+    counts = {"positive": 0, "neutral": 0, "negative": 0}
+    per_day = defaultdict(list)  # day -> list of (positive - negative)
+
+    for news, sent in pairs:
+        p = _num(sent.positive_score) or 0.0
+        n = _num(sent.neutral_score) or 0.0
+        g = _num(sent.negative_score) or 0.0
+        pos_sum += p
+        neu_sum += n
+        neg_sum += g
+        label = (sent.sentiment or "").lower()
+        if label in counts:
+            counts[label] += 1
+        if news.published_at is not None:
+            per_day[news.published_at.date()].append(p - g)
+
+    total = len(pairs)
+    if total:
+        avg_p, avg_n, avg_g = pos_sum / total, neu_sum / total, neg_sum / total
+        net = avg_p - avg_g
+    else:
+        avg_p = avg_n = avg_g = net = None
+
+    summary = SentimentSummaryOut(
+        article_count=total,
+        positive_count=counts["positive"],
+        neutral_count=counts["neutral"],
+        negative_count=counts["negative"],
+        avg_positive=round(avg_p, 4) if avg_p is not None else None,
+        avg_neutral=round(avg_n, 4) if avg_n is not None else None,
+        avg_negative=round(avg_g, 4) if avg_g is not None else None,
+        net_score=round(net, 4) if net is not None else None,
+        overall_label=_overall_label(net),
+    )
+
+    trend = [
+        SentimentDayOut(day=d, article_count=len(v), net_score=round(sum(v) / len(v), 4))
+        for d, v in sorted(per_day.items())
+    ]
+
+    recent = [
+        NewsArticleOut(
+            title=news.title,
+            description=news.description,
+            source=news.source,
+            url=news.url,
+            published_at=news.published_at,
+            sentiment=_sentiment_out(sent),
+        )
+        for news, sent in pairs[:articles]
+    ]
+
+    return SentimentSummaryResponse(
+        symbol=stock.symbol,
+        window_days=days,
+        summary=summary,
+        daily_trend=trend,
+        recent_articles=recent,
+        note=(
+            "Scores come from the FinBERT model applied to news headlines and "
+            "descriptions from Finnhub (times in UTC). net_score = average positive "
+            "minus average negative. The overall_label thresholds (+/-0.10) are this "
+            "project's own rule, not FinBERT's. Only articles fetched so far are "
+            "included. This is an analytical signal, not investment advice."
+        ),
     )

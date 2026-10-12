@@ -1,9 +1,10 @@
+﻿from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import FinancialStatement, News, PriceHistory, Stock, TechnicalIndicator
+from models import FinancialStatement, News, NewsSentiment, PriceHistory, Stock, TechnicalIndicator
 
 
 def _clean_symbol(symbol: str) -> str:
@@ -116,6 +117,7 @@ def get_price_history(db: Session, stock_id: int, limit: int = 365) -> List[Pric
     rows.reverse()
     return rows
 
+
 # ---------- technical indicators ----------
 def add_indicator_rows(db: Session, stock_id: int, records: list) -> int:
     """
@@ -148,7 +150,7 @@ def get_indicator_history(db: Session, stock_id: int, limit: int = 250) -> List[
     return rows
 
 
-    # ---------- financial statements ----------
+# ---------- financial statements ----------
 def add_financial_rows(db: Session, stock_id: int, records: list) -> int:
     """Insert only report dates not stored yet. Returns how many were added."""
     statement = select(FinancialStatement.report_date).where(
@@ -186,7 +188,6 @@ def get_financial_history(db: Session, stock_id: int, limit: int = 10) -> List[F
     rows = list(db.execute(statement).scalars().all())
     rows.reverse()
     return rows
-
 
 
 # ---------- news ----------
@@ -230,3 +231,73 @@ def get_news(db: Session, stock_id: int, limit: int = 50) -> List[News]:
         .limit(limit)
     )
     return list(db.execute(statement).scalars().all())
+
+
+def get_news_with_sentiment(db: Session, stock_id: int, limit: int = 50) -> list:
+    """Latest `limit` articles, newest first, each paired with its sentiment row (or None)."""
+    statement = (
+        select(News, NewsSentiment)
+        .outerjoin(NewsSentiment, NewsSentiment.news_id == News.news_id)
+        .where(News.stock_id == stock_id)
+        .order_by(News.published_at.desc())
+        .limit(limit)
+    )
+    return list(db.execute(statement).all())
+
+
+# ---------- news sentiment ----------
+def get_unscored_news(db: Session, limit: int = 200) -> List[News]:
+    """Articles that have no sentiment row yet, newest first."""
+    statement = (
+        select(News)
+        .outerjoin(NewsSentiment, NewsSentiment.news_id == News.news_id)
+        .where(NewsSentiment.sentiment_id.is_(None))
+        .order_by(News.published_at.desc())
+        .limit(limit)
+    )
+    return list(db.execute(statement).scalars().all())
+
+
+def count_unscored_news(db: Session) -> int:
+    """How many articles still need a sentiment score."""
+    statement = (
+        select(func.count())
+        .select_from(News)
+        .outerjoin(NewsSentiment, NewsSentiment.news_id == News.news_id)
+        .where(NewsSentiment.sentiment_id.is_(None))
+    )
+    return db.execute(statement).scalar_one()
+
+
+def add_sentiments(db: Session, scored: list) -> int:
+    """Save (news_id, result) pairs into news_sentiment. Returns how many were saved."""
+    rows = [
+        NewsSentiment(
+            news_id=news_id,
+            sentiment=result["sentiment"],
+            positive_score=result["positive_score"],
+            neutral_score=result["neutral_score"],
+            negative_score=result["negative_score"],
+        )
+        for news_id, result in scored
+    ]
+    db.add_all(rows)
+    db.commit()
+    return len(rows)
+
+
+# ---------- scored news (for the sentiment summary endpoint) ----------
+def get_scored_news(db: Session, stock_id: int, since: Optional[datetime] = None) -> list:
+    """(News, NewsSentiment) pairs for scored articles, newest first.
+
+    `since` is a UTC datetime without timezone, like News.published_at.
+    """
+    statement = (
+        select(News, NewsSentiment)
+        .join(NewsSentiment, NewsSentiment.news_id == News.news_id)
+        .where(News.stock_id == stock_id)
+        .order_by(News.published_at.desc())
+    )
+    if since is not None:
+        statement = statement.where(News.published_at >= since)
+    return list(db.execute(statement).all())

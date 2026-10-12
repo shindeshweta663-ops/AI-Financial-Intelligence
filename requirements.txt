@@ -1,11 +1,25 @@
-fastapi
-uvicorn
-python-dotenv
-requests
-pandas
-numpy
-scikit-learn
-xgboost
-sqlalchemy
-psycopg2-binary
-shap
+# Web framework
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic==2.13.5
+
+# Configuration
+python-dotenv==1.2.4
+
+# Database
+SQLAlchemy==2.1.1
+psycopg2-binary==2.9.13
+
+# Data and HTTP
+requests==2.34.2
+pandas==3.0.6
+numpy==2.5.3
+
+# Machine learning
+scikit-learn==1.9.1
+xgboost==3.4.1
+shap==0.52.0
+
+# FinBERT sentiment (CPU build of PyTorch)
+torch==2.14.1
+transformers==5.19.0
