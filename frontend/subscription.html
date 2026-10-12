@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FININTEL | Subscription</title>
+    <meta
+      name="description"
+      content="Unlock your market intelligence with the FININTEL annual plan."
+    />
+
+    <!-- Fonts, Bootstrap 5 and Bootstrap Icons (same as the other FININTEL pages) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ===== FININTEL – global styles ===== */
+      :root {
+        --ink: #07080c;
+        --surface: #0f1219;
+        --surface-2: #151924;
+        --line: rgba(255, 255, 255, 0.08);
+        --gold: #e8b84a;
+        --amber: #f59e0b;
+        --text: #f3efe6;
+        --muted: #8a8f9c;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .price,
+      strong,
+      .brand {
+        font-family: "Sora", sans-serif;
+      }
+      a {
+        text-decoration: none;
+      }
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+      }
+
+      /* ===== Background effects ===== */
+      .bg-fx {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(110px);
+        opacity: 0.28;
+      }
+      .b1 {
+        width: 520px;
+        height: 520px;
+        background: var(--amber);
+        top: -160px;
+        right: -120px;
+        animation: drift 18s ease-in-out infinite alternate;
+      }
+      .b2 {
+        width: 460px;
+        height: 460px;
+        background: #1c2a52;
+        bottom: -140px;
+        left: -140px;
+        animation: drift 22s ease-in-out infinite alternate-reverse;
+      }
+      .grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(
+          ellipse at 50% 20%,
+          #000 20%,
+          transparent 70%
+        );
+        opacity: 0.5;
+      }
+      @keyframes drift {
+        to {
+          transform: translate(60px, 40px) scale(1.15);
+        }
+      }
+
+      /* ===== Navbar ===== */
+      .fn-nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+        padding: 0.9rem 0;
+        transition:
+          background 0.4s,
+          backdrop-filter 0.4s,
+          padding 0.4s;
+        animation: navIn 0.8s var(--ease) both;
+      }
+      .fn-nav.scrolled {
+        background: rgba(10, 12, 18, 0.72);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--line);
+        padding: 0.55rem 0;
+      }
+      @keyframes navIn {
+        from {
+          opacity: 0;
+          transform: translateY(-24px);
+        }
+      }
+      .brand {
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 1.15rem;
+      }
+      .brand i {
+        color: var(--gold);
+        margin-right: 0.4rem;
+        text-shadow: 0 0 14px var(--amber);
+      }
+      .fn-nav .nav-link {
+        color: var(--muted);
+        position: relative;
+        padding: 0.5rem 1rem;
+        transition: color 0.3s;
+      }
+      .fn-nav .nav-link::after {
+        content: "";
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 0.2rem;
+        height: 2px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s var(--ease);
+        box-shadow: 0 0 10px var(--amber);
+      }
+      .fn-nav .nav-link:hover,
+      .fn-nav .nav-link.active {
+        color: var(--text);
+      }
+      .fn-nav .nav-link:hover::after,
+      .fn-nav .nav-link.active::after {
+        transform: scaleX(1);
+      }
+      .navbar-toggler {
+        border: 1px solid var(--line);
+        color: var(--text);
+      }
+      .navbar-toggler:focus {
+        box-shadow: none;
+      }
+      @media (max-width: 991px) {
+        .fn-nav .navbar-collapse {
+          background: rgba(15, 18, 25, 0.95);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          margin-top: 0.8rem;
+          padding: 1rem;
+        }
+      }
+
+      /* ===== Buttons ===== */
+      .btn-fin {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: 999px;
+        font-weight: 600;
+        transition:
+          transform 0.3s var(--ease),
+          box-shadow 0.3s,
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .btn-fin i {
+        transition: transform 0.3s var(--ease);
+      }
+      .btn-fin:hover {
+        transform: translateY(-3px);
+      }
+      .btn-fin:hover i {
+        transform: translateX(4px);
+      }
+      .btn-fin:active {
+        transform: translateY(0) scale(0.97);
+      }
+      .btn-gold {
+        background: linear-gradient(135deg, var(--gold), var(--amber));
+        color: #1a1305;
+        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.25);
+      }
+      .btn-gold:hover {
+        color: #1a1305;
+        box-shadow: 0 10px 36px rgba(245, 158, 11, 0.5);
+      }
+      .btn-ghost {
+        border: 1px solid var(--line);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .btn-ghost:hover {
+        color: var(--gold);
+        border-color: rgba(232, 184, 74, 0.5);
+        background: rgba(232, 184, 74, 0.06);
+      }
+      .btn-ghost:hover i {
+        transform: translateY(3px);
+      }
+      .nav-cta {
+        padding: 0.5rem 1.2rem;
+      }
+
+      /* ===== Page-load animation ===== */
+      .load {
+        opacity: 0;
+        transform: translateY(26px);
+        animation: rise 0.9s var(--ease) var(--d, 0s) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* =====================================================
+         SUBSCRIPTION PAGE (only the styles below are new)
+      ===================================================== */
+      .sub-page {
+        min-height: 100vh;
+        padding: 8rem 0 4rem;
+      }
+      .sub-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: "Sora", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 1.15rem;
+        color: var(--text);
+      }
+      .sub-logo i {
+        color: var(--gold);
+        text-shadow: 0 0 14px var(--amber);
+      }
+      .sub-eyebrow {
+        display: inline-block;
+        margin: 1.4rem 0 1rem;
+        padding: 0.3rem 0.9rem;
+        border: 1px solid rgba(232, 184, 74, 0.35);
+        border-radius: 999px;
+        color: var(--gold);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .sub-title {
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 700;
+        line-height: 1.15;
+        margin-bottom: 1rem;
+      }
+      .sub-title .gold {
+        background: linear-gradient(135deg, var(--gold), var(--amber));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .sub-lead {
+        max-width: 560px;
+        margin: 0 auto;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      /* Plan card */
+      .plan {
+        position: relative;
+        max-width: 480px;
+        margin: 3rem auto 0;
+        padding: 2.2rem 2rem 2rem;
+        background: linear-gradient(
+          160deg,
+          rgba(21, 25, 36, 0.9),
+          rgba(15, 18, 25, 0.9)
+        );
+        border: 1px solid rgba(232, 184, 74, 0.35);
+        border-radius: 24px;
+        box-shadow:
+          0 30px 80px rgba(0, 0, 0, 0.5),
+          0 0 60px rgba(245, 158, 11, 0.1);
+        overflow: hidden;
+        transition:
+          transform 0.4s var(--ease),
+          box-shadow 0.4s,
+          border-color 0.4s;
+      }
+      /* soft gold light that follows the mouse (set by JavaScript) */
+      .plan::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          320px circle at var(--mx, 50%) var(--my, 0%),
+          rgba(232, 184, 74, 0.14),
+          transparent 60%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+        pointer-events: none;
+      }
+      .plan:hover {
+        transform: translateY(-6px);
+        border-color: rgba(232, 184, 74, 0.6);
+        box-shadow:
+          0 40px 90px rgba(0, 0, 0, 0.55),
+          0 0 80px rgba(245, 158, 11, 0.2);
+      }
+      .plan:hover::before {
+        opacity: 1;
+      }
+      .plan > * {
+        position: relative;
+      }
+      .plan-badge {
+        position: absolute;
+        top: 1.1rem;
+        right: 1.1rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(232, 184, 74, 0.12);
+        color: var(--gold);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .plan-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0 0 0.2rem;
+      }
+      .plan-desc {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 0;
+      }
+      .price-row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        margin: 1.4rem 0 0.2rem;
+      }
+      .price {
+        font-size: 3.4rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--text);
+      }
+      .price-unit {
+        color: var(--muted);
+        font-size: 1rem;
+      }
+      .price-sub {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+      }
+      .plan-line {
+        height: 1px;
+        margin-bottom: 1.4rem;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(232, 184, 74, 0.5),
+          transparent
+        );
+      }
+      .features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.8rem;
+      }
+      .features li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.55rem 0;
+        font-size: 0.97rem;
+        transition:
+          transform 0.3s var(--ease),
+          color 0.3s;
+      }
+      .features li:hover {
+        transform: translateX(4px);
+        color: #fff;
+      }
+      .features i {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(232, 184, 74, 0.1);
+        color: var(--gold);
+        font-size: 0.95rem;
+      }
+      .features span {
+        padding-top: 0.2rem;
+      }
+      .btn-subscribe {
+        width: 100%;
+        justify-content: center;
+        padding: 0.95rem 1.5rem;
+        font-size: 1.05rem;
+      }
+      .plan-note {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 1.1rem 0 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+        text-align: center;
+      }
+      .plan-note i {
+        color: var(--gold);
+      }
+      .sub-foot {
+        max-width: 480px;
+        margin: 1.4rem auto 0;
+        color: rgba(138, 143, 156, 0.75);
+        font-size: 0.78rem;
+        text-align: center;
+      }
+
+      @media (max-width: 575px) {
+        .sub-page {
+          padding-top: 6.5rem;
+        }
+        .plan {
+          padding: 2rem 1.3rem 1.6rem;
+        }
+        .price {
+          font-size: 2.9rem;
+        }
+        .plan-badge {
+          position: static;
+          display: inline-block;
+          margin-bottom: 0.9rem;
+        }
+      }
+
+      /* ===== Footer: minimal closing section ===== */
+      .ft {
+        position: relative;
+        overflow: hidden;
+        margin-top: 3rem;
+        padding: 7rem 0 1.5rem;
+        background:
+          radial-gradient(
+            ellipse at 50% 55%,
+            rgba(245, 158, 11, 0.09),
+            transparent 60%
+          ),
+          linear-gradient(180deg, transparent, #04050a 45%);
+      }
+      .ft-graph {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 2.5s ease 0.1s;
+        -webkit-mask-image: radial-gradient(
+          ellipse at 50% 50%,
+          #000 25%,
+          transparent 78%
+        );
+        mask-image: radial-gradient(
+          ellipse at 50% 50%,
+          #000 25%,
+          transparent 78%
+        );
+      }
+      .ft.in .ft-graph {
+        opacity: 0.8;
+      }
+      .ft-gridlines line {
+        stroke: rgba(255, 255, 255, 0.07);
+        stroke-dasharray: 2 8;
+      }
+      .ft-line,
+      .ft-line-glow {
+        fill: none;
+        stroke: url(#ftStroke);
+        stroke-width: 2;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 3.2s var(--ease) 0.4s;
+      }
+      .ft-line-glow {
+        stroke-width: 6;
+        opacity: 0.7;
+      }
+      .ft.in .ft-line,
+      .ft.in .ft-line-glow {
+        stroke-dashoffset: 0;
+      }
+      .ft-dot {
+        fill: var(--gold);
+        filter: drop-shadow(0 0 8px var(--amber))
+          drop-shadow(0 0 16px var(--amber));
+      }
+      .ft-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .ft-particles i {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--gold);
+        opacity: 0;
+        animation: ftFloat var(--t, 12s) ease-in-out var(--dl, 0s) infinite;
+      }
+      @keyframes ftFloat {
+        0% {
+          opacity: 0;
+          transform: translateY(0);
+        }
+        30%,
+        60% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-60px);
+        }
+      }
+      .ft-center {
+        position: relative;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .ft-item {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 1s var(--ease) var(--d, 0s),
+          transform 1s var(--ease) var(--d, 0s),
+          color 0.3s,
+          text-shadow 0.4s;
+      }
+      .ft.in .ft-item {
+        opacity: 1;
+        transform: none;
+      }
+      .ft-mark {
+        color: var(--gold);
+        font-size: 1.3rem;
+        margin-bottom: 0.9rem;
+        text-shadow:
+          0 0 18px var(--amber),
+          0 0 40px rgba(245, 158, 11, 0.6);
+        animation: markPulse 4s ease-in-out infinite;
+      }
+      @keyframes markPulse {
+        50% {
+          text-shadow:
+            0 0 28px var(--amber),
+            0 0 60px rgba(245, 158, 11, 0.8);
+        }
+      }
+      .ft-word {
+        font-family: "Sora", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2.6rem, 8vw, 5.5rem);
+        letter-spacing: 0.18em;
+        line-height: 1;
+        color: var(--text);
+        padding-left: 0.18em;
+        transform: translateY(18px) scale(0.94);
+      }
+      .ft.in .ft-word {
+        transform: none;
+      }
+      .ft-word:hover {
+        color: #fff;
+        text-shadow:
+          0 0 30px rgba(245, 158, 11, 0.55),
+          0 0 70px rgba(245, 158, 11, 0.3);
+      }
+      .ft-tag {
+        margin: 1.3rem 0 0;
+        font-size: 1.05rem;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+      }
+      .ft-rule {
+        display: block;
+        width: min(360px, 70%);
+        height: 1px;
+        margin: 2rem auto 1.8rem;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold),
+          transparent
+        );
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
+        transform: scaleX(0);
+        transition: transform 1.6s var(--ease) 1s;
+      }
+      .ft.in .ft-rule {
+        transform: scaleX(1);
+      }
+      .ft-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem 2.6rem;
+      }
+      .ft-nav a {
+        position: relative;
+        font-size: 0.9rem;
+        color: var(--muted);
+        padding: 0.3rem 0;
+      }
+      .ft-nav a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s var(--ease);
+      }
+      .ft-nav a:hover {
+        color: var(--gold);
+      }
+      .ft-nav a:hover::after {
+        transform: scaleX(1);
+      }
+      .ft-base {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.4rem 1rem;
+        margin-top: 5rem;
+        font-size: 0.78rem;
+        color: rgba(138, 143, 156, 0.7);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ft-item,
+        .ft-graph {
+          opacity: 1;
+          transform: none;
+        }
+        .ft-line,
+        .ft-line-glow {
+          stroke-dashoffset: 0;
+        }
+        .ft-rule {
+          transform: none;
+        }
+        .ft-particles {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .load {
+          opacity: 1;
+          transform: none;
+          animation: none;
+        }
+        .plan,
+        .features li {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Background effects (same as index.html) -->
+    <div class="bg-fx" aria-hidden="true">
+      <span class="blob b1"></span><span class="blob b2"></span
+      ><span class="grid-lines"></span>
+    </div>
+
+    <!-- NAVBAR (same as index.html) -->
+    <nav class="navbar navbar-expand-lg fn-nav">
+      <div class="container">
+        <a class="navbar-brand brand" href="index.html"
+          ><i class="bi bi-hexagon-fill"></i>FININTEL</a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle menu"
+        >
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#features">Features</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#why">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">Login</a>
+            </li>
+            <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+              <a class="btn-fin btn-gold nav-cta" href="analysis.html"
+                >Get Started <i class="bi bi-arrow-right"></i
+              ></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- SUBSCRIPTION -->
+    <main class="sub-page">
+      <div class="container text-center">
+        <div class="load" style="--d: 0.1s">
+          <span class="sub-logo"
+            ><i class="bi bi-hexagon-fill"></i>FININTEL</span
+          >
+        </div>
+        <div class="load" style="--d: 0.2s">
+          <span class="sub-eyebrow">Annual Plan</span>
+        </div>
+        <h1 class="sub-title load" style="--d: 0.3s">
+          Unlock Your <span class="gold">Market Intelligence.</span>
+        </h1>
+        <p class="sub-lead load" style="--d: 0.4s">
+          One simple plan with full access to FININTEL's stock analysis,
+          forecasting and risk tools.
+        </p>
+
+        <!-- Plan card -->
+        <section class="plan load text-start" style="--d: 0.55s" id="plan">
+          <span class="plan-badge">1 Year</span>
+          <h2 class="plan-name">FININTEL Annual</h2>
+          <p class="plan-desc">
+            Everything in the platform, for twelve months.
+          </p>
+
+          <div class="price-row">
+            <span class="price">&#8377;999</span>
+            <span class="price-unit">/ year</span>
+          </div>
+          <div class="price-sub">
+            About &#8377;83 per month, billed once a year.
+          </div>
+
+          <div class="plan-line"></div>
+
+          <ul class="features">
+            <li>
+              <i class="bi bi-graph-up-arrow"></i>
+              <span>Stock prediction dashboard access</span>
+            </li>
+            <li>
+              <i class="bi bi-activity"></i>
+              <span>Technical indicators and market insights</span>
+            </li>
+            <li>
+              <i class="bi bi-newspaper"></i>
+              <span>Financial news and sentiment analysis</span>
+            </li>
+            <li>
+              <i class="bi bi-shield-check"></i>
+              <span>Risk analysis and forecasting</span>
+            </li>
+          </ul>
+
+          <!-- Goes to payment.html (the payment page is built separately) -->
+          <a
+            class="btn-fin btn-gold btn-subscribe"
+            id="subscribeBtn"
+            href="payment.html"
+          >
+            Subscribe Now <i class="bi bi-arrow-right"></i>
+          </a>
+
+          <p class="plan-note">
+            <i class="bi bi-calendar-check"></i>
+            <span>Valid for one year after successful payment.</span>
+          </p>
+        </section>
+
+        <p class="sub-foot load" style="--d: 0.7s">
+          FININTEL is an analysis and research platform. It does not provide
+          investment advice or trading services.
+        </p>
+      </div>
+    </main>
+
+    <!-- FOOTER (same as index.html) -->
+    <footer class="ft">
+      <!-- Decorative graph only (not real data) -->
+      <svg
+        class="ft-graph"
+        viewBox="0 0 1200 300"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="ftStroke" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#E8B84A" stop-opacity="0" />
+            <stop offset=".35" stop-color="#E8B84A" stop-opacity=".9" />
+            <stop offset="1" stop-color="#F59E0B" stop-opacity="0" />
+          </linearGradient>
+          <filter id="ftBlur"><feGaussianBlur stdDeviation="4" /></filter>
+        </defs>
+        <g class="ft-gridlines">
+          <line x1="0" y1="75" x2="1200" y2="75" />
+          <line x1="0" y1="150" x2="1200" y2="150" />
+          <line x1="0" y1="225" x2="1200" y2="225" />
+        </g>
+        <path
+          id="ftPath"
+          class="ft-line-glow"
+          d="M0 250 C110 240 170 190 270 200 S430 130 530 150 S710 70 830 100 S1030 45 1200 25"
+          pathLength="1"
+          filter="url(#ftBlur)"
+        />
+        <path
+          class="ft-line"
+          d="M0 250 C110 240 170 190 270 200 S430 130 530 150 S710 70 830 100 S1030 45 1200 25"
+          pathLength="1"
+        />
+        <circle class="ft-dot" r="5">
+          <animateMotion dur="10s" repeatCount="indefinite" calcMode="linear">
+            <mpath href="#ftPath" />
+          </animateMotion>
+          <animate
+            attributeName="opacity"
+            values="0;1;1;0"
+            keyTimes="0;.1;.85;1"
+            dur="10s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      </svg>
+      <div class="ft-particles" aria-hidden="true"></div>
+
+      <div class="container ft-center">
+        <i
+          class="bi bi-hexagon-fill ft-mark ft-item"
+          style="--d: 0.3s"
+          aria-hidden="true"
+        ></i>
+        <a class="ft-word ft-item" style="--d: 0.4s" href="index.html"
+          >FININTEL</a
+        >
+        <p class="ft-tag ft-item" style="--d: 0.7s">
+          See the market differently.
+        </p>
+        <span class="ft-rule" aria-hidden="true"></span>
+        <nav class="ft-nav" aria-label="Footer">
+          <a class="ft-item" style="--d: 1.5s" href="index.html">Home</a>
+          <a class="ft-item" style="--d: 1.65s" href="index.html#features"
+            >Features</a
+          >
+          <a class="ft-item" style="--d: 1.8s" href="index.html#why">About</a>
+          <a class="ft-item" style="--d: 1.95s" href="analysis.html"
+            >Analysis</a
+          >
+          <a class="ft-item" style="--d: 2.1s" href="login.html">Login</a>
+        </nav>
+      </div>
+
+      <div class="container ft-base">
+        <span>&copy; 2026 FININTEL</span>
+        <span>Research &amp; analysis platform</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      /* ===== FININTEL – Subscription page behaviour =====
+         Only adds motion. The Subscribe button is a normal link to
+         payment.html, so it works even if this script fails. */
+
+      /* 1. Navbar gets a glass background after scrolling */
+      function initNavbarScroll() {
+        const nav = document.querySelector(".fn-nav");
+        if (!nav) return;
+        const update = () =>
+          nav.classList.toggle("scrolled", window.scrollY > 20);
+        update();
+        window.addEventListener("scroll", update, { passive: true });
+      }
+
+      /* 2. Gold light that follows the mouse over the plan card */
+      function initPlanGlow() {
+        const plan = document.querySelector(".plan");
+        if (!plan) return;
+        plan.addEventListener("mousemove", (e) => {
+          const r = plan.getBoundingClientRect();
+          plan.style.setProperty("--mx", `${e.clientX - r.left}px`);
+          plan.style.setProperty("--my", `${e.clientY - r.top}px`);
+        });
+      }
+
+      /* 3. Footer: reveal, floating particles, travelling point */
+      function initFooter() {
+        const ft = document.querySelector(".ft");
+        if (!ft) return;
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const svg = ft.querySelector(".ft-graph");
+        const box = ft.querySelector(".ft-particles");
+        if (!reduce && box) {
+          for (let i = 0; i < 16; i++) {
+            const p = document.createElement("i");
+            p.style.left = `${Math.random() * 100}%`;
+            p.style.top = `${30 + Math.random() * 60}%`;
+            p.style.setProperty("--t", `${9 + Math.random() * 8}s`);
+            p.style.setProperty("--dl", `${Math.random() * 8}s`);
+            box.appendChild(p);
+          }
+        }
+        if (svg && svg.pauseAnimations) svg.pauseAnimations();
+        new IntersectionObserver(
+          (entries, obs) => {
+            if (!entries[0].isIntersecting) return;
+            ft.classList.add("in");
+            if (svg && svg.unpauseAnimations && !reduce)
+              svg.unpauseAnimations();
+            obs.unobserve(ft);
+          },
+          { threshold: 0.25 },
+        ).observe(ft);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initNavbarScroll();
+        initPlanGlow();
+        initFooter();
+      });
+    </script>
+  </body>
+</html>
