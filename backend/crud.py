@@ -301,3 +301,54 @@ def get_scored_news(db: Session, stock_id: int, since: Optional[datetime] = None
     if since is not None:
         statement = statement.where(News.published_at >= since)
     return list(db.execute(statement).all())
+
+# ---------- incremental price update ----------
+def upsert_price_bars(db: Session, stock_id: int, bars: list) -> tuple:
+    """Insert new bars and correct stored bars whose values differ.
+
+    Returns (inserted, updated). Used by update_data.py so a bar stored
+    too early (for example a partial day) is fixed on a later run.
+    """
+    if not bars:
+        return 0, 0
+    start = min(bar.date for bar in bars)
+    statement = select(PriceHistory).where(
+        PriceHistory.stock_id == stock_id, PriceHistory.date >= start
+    )
+    existing = {row.date: row for row in db.execute(statement).scalars().all()}
+
+    inserted = updated = 0
+    for bar in bars:
+        row = existing.get(bar.date)
+        if row is None:
+            db.add(
+                PriceHistory(
+                    stock_id=stock_id,
+                    date=bar.date,
+                    open_price=bar.open,
+                    high_price=bar.high,
+                    low_price=bar.low,
+                    close_price=bar.close,
+                    volume=bar.volume,
+                )
+            )
+            inserted += 1
+            continue
+
+        same = (
+            abs(float(row.open_price) - bar.open) < 0.005
+            and abs(float(row.high_price) - bar.high) < 0.005
+            and abs(float(row.low_price) - bar.low) < 0.005
+            and abs(float(row.close_price) - bar.close) < 0.005
+            and row.volume == bar.volume
+        )
+        if not same:
+            row.open_price = bar.open
+            row.high_price = bar.high
+            row.low_price = bar.low
+            row.close_price = bar.close
+            row.volume = bar.volume
+            updated += 1
+
+    db.commit()
+    return inserted, updated
