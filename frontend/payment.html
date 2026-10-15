@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FININTEL | Payment</title>
+    <meta name="description" content="Complete your FININTEL annual subscription." />
+
+    <!-- Fonts, Bootstrap 5 and Bootstrap Icons (same as the other FININTEL pages) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ===== FININTEL – global styles ===== */
+      :root {
+        --ink: #07080c;
+        --surface: #0f1219;
+        --surface-2: #151924;
+        --line: rgba(255, 255, 255, 0.08);
+        --gold: #e8b84a;
+        --amber: #f59e0b;
+        --text: #f3efe6;
+        --muted: #8a8f9c;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .price,
+      strong,
+      .brand {
+        font-family: "Sora", sans-serif;
+      }
+      a {
+        text-decoration: none;
+      }
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+      }
+
+      /* ===== Background effects ===== */
+      .bg-fx {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(110px);
+        opacity: 0.28;
+      }
+      .b1 {
+        width: 520px;
+        height: 520px;
+        background: var(--amber);
+        top: -160px;
+        right: -120px;
+        animation: drift 18s ease-in-out infinite alternate;
+      }
+      .b2 {
+        width: 460px;
+        height: 460px;
+        background: #1c2a52;
+        bottom: -140px;
+        left: -140px;
+        animation: drift 22s ease-in-out infinite alternate-reverse;
+      }
+      .grid-lines {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(
+          ellipse at 50% 20%,
+          #000 20%,
+          transparent 70%
+        );
+        opacity: 0.5;
+      }
+      @keyframes drift {
+        to {
+          transform: translate(60px, 40px) scale(1.15);
+        }
+      }
+
+      /* ===== Navbar ===== */
+      .fn-nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+        padding: 0.9rem 0;
+        transition:
+          background 0.4s,
+          backdrop-filter 0.4s,
+          padding 0.4s;
+        animation: navIn 0.8s var(--ease) both;
+      }
+      .fn-nav.scrolled {
+        background: rgba(10, 12, 18, 0.72);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--line);
+        padding: 0.55rem 0;
+      }
+      @keyframes navIn {
+        from {
+          opacity: 0;
+          transform: translateY(-24px);
+        }
+      }
+      .brand {
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 1.15rem;
+      }
+      .brand i {
+        color: var(--gold);
+        margin-right: 0.4rem;
+        text-shadow: 0 0 14px var(--amber);
+      }
+      .fn-nav .nav-link {
+        color: var(--muted);
+        position: relative;
+        padding: 0.5rem 1rem;
+        transition: color 0.3s;
+      }
+      .fn-nav .nav-link::after {
+        content: "";
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 0.2rem;
+        height: 2px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s var(--ease);
+        box-shadow: 0 0 10px var(--amber);
+      }
+      .fn-nav .nav-link:hover,
+      .fn-nav .nav-link.active {
+        color: var(--text);
+      }
+      .fn-nav .nav-link:hover::after,
+      .fn-nav .nav-link.active::after {
+        transform: scaleX(1);
+      }
+      .navbar-toggler {
+        border: 1px solid var(--line);
+        color: var(--text);
+      }
+      .navbar-toggler:focus {
+        box-shadow: none;
+      }
+      @media (max-width: 991px) {
+        .fn-nav .navbar-collapse {
+          background: rgba(15, 18, 25, 0.95);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          margin-top: 0.8rem;
+          padding: 1rem;
+        }
+      }
+
+      /* ===== Buttons ===== */
+      .btn-fin {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: 999px;
+        font-weight: 600;
+        transition:
+          transform 0.3s var(--ease),
+          box-shadow 0.3s,
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .btn-fin i {
+        transition: transform 0.3s var(--ease);
+      }
+      .btn-fin:hover {
+        transform: translateY(-3px);
+      }
+      .btn-fin:hover i {
+        transform: translateX(4px);
+      }
+      .btn-fin:active {
+        transform: translateY(0) scale(0.97);
+      }
+      .btn-gold {
+        background: linear-gradient(135deg, var(--gold), var(--amber));
+        color: #1a1305;
+        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.25);
+      }
+      .btn-gold:hover {
+        color: #1a1305;
+        box-shadow: 0 10px 36px rgba(245, 158, 11, 0.5);
+      }
+      .btn-ghost {
+        border: 1px solid var(--line);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .btn-ghost:hover {
+        color: var(--gold);
+        border-color: rgba(232, 184, 74, 0.5);
+        background: rgba(232, 184, 74, 0.06);
+      }
+      .btn-ghost:hover i {
+        transform: translateY(3px);
+      }
+      .nav-cta {
+        padding: 0.5rem 1.2rem;
+      }
+
+
+      /* ===== Page-load animation ===== */
+      .load {
+        opacity: 0;
+        transform: translateY(26px);
+        animation: rise 0.9s var(--ease) var(--d, 0s) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+
+
+      /* =====================================================
+         PAYMENT PAGE (compact) - only the styles below are new
+      ===================================================== */
+      .pay-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 5.4rem 0 1.5rem;
+      }
+      .pay-wrap {
+        max-width: 750px;
+        margin: 0 auto;
+        padding: 0 12px;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.7rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+        transition: color 0.3s;
+      }
+      .back-link i {
+        transition: transform 0.3s var(--ease);
+      }
+      .back-link:hover {
+        color: var(--gold);
+      }
+      .back-link:hover i {
+        transform: translateX(-4px);
+      }
+
+      /* Card */
+      .pay-card {
+        display: grid;
+        grid-template-columns: 5fr 7fr;
+        background: linear-gradient(160deg, rgba(21, 25, 36, 0.92), rgba(15, 18, 25, 0.92));
+        border: 1px solid rgba(232, 184, 74, 0.35);
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(245, 158, 11, 0.08);
+        overflow: hidden;
+        transition: border-color 0.4s, box-shadow 0.4s;
+      }
+      .pay-card:hover {
+        border-color: rgba(232, 184, 74, 0.55);
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55), 0 0 60px rgba(245, 158, 11, 0.14);
+      }
+      .pay-col {
+        padding: 1.3rem 1.35rem;
+      }
+      .pay-left {
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .pay-eyebrow {
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin: 0 0 0.35rem;
+      }
+      .pay-plan {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      .pay-price {
+        display: flex;
+        align-items: baseline;
+        gap: 0.35rem;
+        margin: 0.7rem 0 0.5rem;
+      }
+      .pay-price strong {
+        font-size: 2.3rem;
+        line-height: 1;
+        font-weight: 700;
+      }
+      .pay-price span {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(232, 184, 74, 0.1);
+        border: 1px solid rgba(232, 184, 74, 0.25);
+        color: var(--gold);
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .pay-list {
+        list-style: none;
+        margin: 1rem 0 0;
+        padding: 0;
+      }
+      .pay-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.28rem 0;
+        font-size: 0.85rem;
+        transition: transform 0.3s var(--ease), color 0.3s;
+      }
+      .pay-list li:hover {
+        transform: translateX(3px);
+        color: #fff;
+      }
+      .pay-list i {
+        color: var(--gold);
+        font-size: 0.9rem;
+      }
+
+      /* Right column */
+      .pay-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 0.5rem;
+      }
+      .methods {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 0.8rem;
+      }
+      .method {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: color 0.3s, border-color 0.3s, background 0.3s;
+      }
+      .method:hover {
+        color: var(--text);
+        border-color: rgba(232, 184, 74, 0.4);
+      }
+      .method.active {
+        color: var(--gold);
+        border-color: rgba(232, 184, 74, 0.7);
+        background: rgba(232, 184, 74, 0.08);
+      }
+      .method-area {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        min-height: 104px;
+        padding: 0.8rem 0.9rem;
+        border-radius: 12px;
+        border: 1px dashed rgba(232, 184, 74, 0.3);
+        background: rgba(255, 255, 255, 0.02);
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .method-area .slot {
+        flex-shrink: 0;
+        width: 76px;
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--gold);
+        font-size: 1.7rem;
+      }
+      .method-area b {
+        display: block;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.88rem;
+        margin-bottom: 0.15rem;
+      }
+      .method-area[hidden] {
+        display: none;
+      }
+      .btn-pay {
+        width: 100%;
+        justify-content: center;
+        margin-top: 0.8rem;
+        padding: 0.65rem 1.2rem;
+        font-size: 0.95rem;
+        border: 0;
+      }
+      .btn-pay:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Payment status */
+      .status {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        margin-top: 0.8rem;
+        padding: 0.55rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .status i {
+        margin-top: 0.1rem;
+      }
+      .status[data-state="pending"] {
+        color: var(--gold);
+        border-color: rgba(232, 184, 74, 0.35);
+      }
+      .status[data-state="success"] {
+        color: #35b97f;
+        border-color: rgba(53, 185, 127, 0.45);
+        background: rgba(53, 185, 127, 0.08);
+      }
+      .status[data-state="failed"] {
+        color: #e0606a;
+        border-color: rgba(224, 96, 106, 0.45);
+        background: rgba(224, 96, 106, 0.08);
+      }
+      .pay-note {
+        margin: 0.6rem 0 0;
+        font-size: 0.72rem;
+        color: rgba(138, 143, 156, 0.8);
+      }
+
+      /* Mobile: stack the columns */
+      @media (max-width: 640px) {
+        .pay-page {
+          justify-content: flex-start;
+          padding-top: 5rem;
+        }
+        .pay-card {
+          grid-template-columns: 1fr;
+        }
+        .pay-left {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pay-col {
+          padding: 1.1rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .load {
+          opacity: 1;
+          transform: none;
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Background effects (same as index.html) -->
+    <div class="bg-fx" aria-hidden="true">
+      <span class="blob b1"></span><span class="blob b2"></span
+      ><span class="grid-lines"></span>
+    </div>
+
+    <!-- NAVBAR (same as index.html) -->
+    <nav class="navbar navbar-expand-lg fn-nav">
+      <div class="container">
+        <a class="navbar-brand brand" href="index.html"
+          ><i class="bi bi-hexagon-fill"></i>FININTEL</a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle menu"
+        >
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#features">Features</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html#why">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">Login</a>
+            </li>
+            <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+              <a class="btn-fin btn-gold nav-cta" href="analysis.html"
+                >Get Started <i class="bi bi-arrow-right"></i
+              ></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+
+    <main class="pay-page">
+      <div class="pay-wrap">
+        <a class="back-link load" style="--d: 0.1s" href="subscription.html">
+          <i class="bi bi-arrow-left"></i> Back to Subscription
+        </a>
+
+        <section class="pay-card load" style="--d: 0.2s" aria-label="Payment">
+          <!-- LEFT: plan summary -->
+          <div class="pay-col pay-left">
+            <p class="pay-eyebrow">Order summary</p>
+            <h1 class="pay-plan">FININTEL Annual</h1>
+            <div class="pay-price">
+              <strong>&#8377;999</strong><span>/ year</span>
+            </div>
+            <span class="chip"
+              ><i class="bi bi-calendar-check"></i> Valid for 1 year after
+              successful payment</span
+            >
+            <ul class="pay-list">
+              <li><i class="bi bi-graph-up-arrow"></i> Stock prediction dashboard</li>
+              <li><i class="bi bi-activity"></i> Technical indicators &amp; insights</li>
+              <li><i class="bi bi-newspaper"></i> News &amp; sentiment analysis</li>
+              <li><i class="bi bi-shield-check"></i> Risk analysis &amp; forecasting</li>
+            </ul>
+          </div>
+
+          <!-- RIGHT: payment method, payment area, status -->
+          <div class="pay-col">
+            <p class="pay-label">Payment method</p>
+            <div class="methods" role="tablist" aria-label="Payment method">
+              <button class="method active" type="button" role="tab" data-method="upi" aria-selected="true">
+                <i class="bi bi-phone"></i> UPI
+              </button>
+              <button class="method" type="button" role="tab" data-method="qr" aria-selected="false">
+                <i class="bi bi-qr-code"></i> QR Code
+              </button>
+            </div>
+
+            <!-- UPI area -->
+            <div class="method-area" id="area-upi">
+              <div class="slot"><i class="bi bi-phone"></i></div>
+              <div>
+                <b>Pay with any UPI app</b>
+                The payment window opens after you press Pay, and you
+                approve the request in your UPI app.
+              </div>
+            </div>
+
+            <!-- QR area: stays empty until the server creates a real order -->
+            <div class="method-area" id="area-qr" hidden>
+              <div class="slot" id="qrSlot"><i class="bi bi-qr-code"></i></div>
+              <div>
+                <b>QR code</b>
+                A scannable QR is shown here only after the payment order is
+                created by the server.
+              </div>
+            </div>
+
+            <button class="btn-fin btn-gold btn-pay" id="payBtn" type="button">
+              <i class="bi bi-lock"></i> <span id="payLabel">Pay &#8377;999</span>
+            </button>
+
+            <!-- Status: success is shown ONLY after the backend confirms -->
+            <div class="status" id="status" data-state="idle" role="status" aria-live="polite">
+              <i class="bi bi-hourglass" id="statusIcon"></i>
+              <span id="statusText">Payment not started.</span>
+            </div>
+
+            <p class="pay-note">
+              <i class="bi bi-shield-lock"></i> Payments are handled by Razorpay.
+              Never share your UPI PIN or OTP. Your subscription is activated
+              only after our server confirms the payment.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      /* ===== FININTEL - Payment page =====
+
+         BACKEND CONTRACT (for the Flask + PostgreSQL developer)
+         -------------------------------------------------------
+         1. POST  /api/payment/create-order
+            body: { "plan": "annual", "method": "upi" | "qr" }
+            The server decides the amount (never trust the browser), creates a
+            Razorpay order and replies:
+            { "order_id": "order_xxx", "key_id": "rzp_...", "amount": 99900,
+              "currency": "INR" }
+
+         2. The browser opens Razorpay Checkout with that order.
+
+         3. POST  /api/payment/verify
+            body: { "razorpay_order_id", "razorpay_payment_id", "razorpay_signature" }
+            The server checks the signature, saves the payment in PostgreSQL,
+            activates the subscription and replies { "status": "success" }.
+
+         4. (Optional) GET /api/payment/status?order_id=order_xxx
+            replies { "status": "pending" | "success" | "failed" }
+            Useful if the user closes the window and the webhook confirms later.
+
+         This file never activates a subscription and never shows success
+         unless the server says so. */
+
+      const API = {
+        createOrder: "/api/payment/create-order",
+        verify: "/api/payment/verify",
+        status: "/api/payment/status",
+      };
+      const PLAN = "annual";
+
+      const $ = (s) => document.querySelector(s);
+      let method = "upi";
+      let busy = false;
+
+      /* ---- Navbar glass background on scroll ---- */
+      (function () {
+        const nav = $(".fn-nav");
+        if (!nav) return;
+        const update = () => nav.classList.toggle("scrolled", window.scrollY > 20);
+        update();
+        addEventListener("scroll", update, { passive: true });
+      })();
+
+      /* ---- Status box (idle | pending | success | failed) ---- */
+      const ICONS = {
+        idle: "bi-hourglass",
+        pending: "bi-arrow-repeat",
+        success: "bi-check-circle-fill",
+        failed: "bi-x-circle-fill",
+      };
+      function setStatus(state, text) {
+        const box = $("#status");
+        box.dataset.state = state;
+        $("#statusIcon").className = "bi " + ICONS[state];
+        $("#statusText").textContent = text;
+      }
+
+      /* ---- Payment method tabs ---- */
+      document.querySelectorAll(".method").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (busy) return;
+          method = btn.dataset.method;
+          document.querySelectorAll(".method").forEach((b) => {
+            const on = b === btn;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-selected", on);
+          });
+          $("#area-upi").hidden = method !== "upi";
+          $("#area-qr").hidden = method !== "qr";
+        });
+      });
+
+      /* ---- Small helper: JSON request to the Flask backend ---- */
+      async function api(url, options) {
+        const res = await fetch(url, {
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin", // keeps the Flask login session cookie
+          ...options,
+        });
+        if (!res.ok) throw new Error("Server responded with " + res.status);
+        return res.json();
+      }
+
+      /* =========================================================
+         RAZORPAY INTEGRATION PLACEHOLDER (to be completed with the
+         Flask backend). The create-order call, the Razorpay Checkout
+         window and the server verification below are wired up but
+         stay inactive until the /api/payment/* routes exist.
+         No fake QR and no fake success is ever shown.
+         ========================================================= */
+
+      /* ---- Load Razorpay Checkout only when it is needed ---- */
+      function loadRazorpay() {
+        return new Promise((resolve, reject) => {
+          if (window.Razorpay) return resolve();
+          const s = document.createElement("script");
+          s.src = "https://checkout.razorpay.com/v1/checkout.js";
+          s.onload = resolve;
+          s.onerror = () => reject(new Error("Could not load Razorpay"));
+          document.head.appendChild(s);
+        });
+      }
+
+      /* ---- Ask the server to confirm; success is shown only from here ---- */
+      async function confirmWithServer(response) {
+        setStatus("pending", "Confirming your payment with the server...");
+        try {
+          const r = await api(API.verify, {
+            method: "POST",
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          if (r.status === "success") {
+            setStatus("success", "Payment confirmed. Your subscription is active.");
+            $("#payLabel").textContent = "Payment complete";
+            $("#payBtn").disabled = true;
+            // Optional: send the user on after a moment, e.g.
+            // setTimeout(() => (location.href = "dashboard.html"), 2000);
+          } else if (r.status === "pending") {
+            setStatus("pending", "Payment received. Waiting for confirmation...");
+            busy = false;
+            $("#payBtn").disabled = false;
+          } else {
+            setStatus("failed", "Payment could not be confirmed. You have not been charged for a subscription.");
+            busy = false;
+            $("#payBtn").disabled = false;
+          }
+        } catch (err) {
+          setStatus("failed", "Could not reach the server to confirm the payment. If money was debited, please contact support.");
+          busy = false;
+          $("#payBtn").disabled = false;
+        }
+      }
+
+      /* ---- Pay button ---- */
+      $("#payBtn").addEventListener("click", async () => {
+        if (busy) return;
+        busy = true;
+        $("#payBtn").disabled = true;
+        setStatus("pending", "Creating your payment order...");
+
+        try {
+          // 1) the server creates the order
+          const order = await api(API.createOrder, {
+            method: "POST",
+            body: JSON.stringify({ plan: PLAN, method }),
+          });
+          if (!order || !order.order_id || !order.key_id) {
+            throw new Error("Invalid order response");
+          }
+
+          // 2) open Razorpay Checkout
+          await loadRazorpay();
+          const rzp = new Razorpay({
+            key: order.key_id,
+            order_id: order.order_id,
+            amount: order.amount,
+            currency: order.currency || "INR",
+            name: "FININTEL",
+            description: "FININTEL Annual (1 year)",
+            theme: { color: "#e8b84a" },
+            handler: confirmWithServer, // browser result is NOT trusted: the server verifies it
+            modal: {
+              ondismiss: () => {
+                if ($("#status").dataset.state === "pending") {
+                  setStatus("idle", "Payment window closed. No payment was made.");
+                }
+                busy = false;
+                $("#payBtn").disabled = false;
+              },
+            },
+          });
+          rzp.on("payment.failed", () => {
+            setStatus("failed", "Payment failed. Please try again.");
+            busy = false;
+            $("#payBtn").disabled = false;
+          });
+          setStatus("pending", "Complete the payment in the Razorpay window.");
+          rzp.open();
+        } catch (err) {
+          // Shown while the backend is not connected yet
+          setStatus("failed", "Payment service is not available right now. Please try again later.");
+          busy = false;
+          $("#payBtn").disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
