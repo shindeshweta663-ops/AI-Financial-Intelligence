@@ -15,7 +15,7 @@ frontend consumes this API.
 | 6 | Financial news (Finnhub) | Done |
 | 7 | FinBERT news sentiment | Done |
 | 8 | Economic indicators (World Bank, FRED) | Done |
-| 9 | Risk analysis | In progress (calculations written and unit-tested; API endpoint next) |
+| 9 | Risk analysis | Done |
 | 10+ | Feature engineering, ML models, auth, portfolio, deployment | Planned |
 
 ## Tech Stack
@@ -71,6 +71,7 @@ Interactive docs: http://127.0.0.1:8000/docs
 | GET | `/api/stocks/{symbol}/financials` | Reported financials |
 | GET | `/api/stocks/{symbol}/news` | Stored news with FinBERT scores |
 | GET | `/api/stocks/{symbol}/sentiment` | Aggregated sentiment, daily trend, recent articles |
+| GET | `/api/stocks/{symbol}/risk` | Historical risk measures: volatility, drawdown, VaR/CVaR, Sharpe, Sortino (optional `window`, `var_level`) |
 | GET | `/api/economic/indicators` | Catalog of stored economic series |
 | GET | `/api/economic/data` | One series (`country`, `indicator`, optional `start_year`, `end_year`) |
 
@@ -86,6 +87,7 @@ Interactive docs: http://127.0.0.1:8000/docs
 | `check_indicator_consistency.py` | Compare stored indicators with recomputed ones |
 | `check_price_quality.py` | Read-only price sanity checks |
 | `check_economic.py` | Summary of the economic table, duplicate count |
+| `check_risk_independent.py` | Read-only loop-based recomputation of the risk measures, compared with `risk.py` |
 | `test_worldbank.py`, `test_fred.py`, `test_risk.py` | Tests (the first two need network, the last needs nothing) |
 
 Loaders are safe to rerun: they insert only rows that are missing.
@@ -98,6 +100,14 @@ Loaders are safe to rerun: they insert only rows that are missing.
 - **NSE / Indian stocks**: no verified free data source yet, so none stored.
 - **Sentiment**: FinBERT scores each article. The overall label uses the
   project's own thresholds (net score beyond +/-0.10), not a FinBERT rule.
+- **Risk**: computed from the stored split-adjusted closing prices, so the
+  figures are historical measures, not predictions or guarantees. Sharpe and
+  Sortino use the stored FRED federal funds rate as the risk-free rate (each
+  day uses the latest monthly value on or before it). Beta is not included
+  because no market index is stored. The default window is 756 returns.
+  The independent cross-check script confirms the implementation matches a
+  loop-based recomputation, not that the conventions match any particular
+  finance website.
 - **Economic data**: dates are the period covered, not the publication date.
   World Bank annual values are dated Dec 31, FRED monthly values the first of
   the month. Machine-learning features must apply a publication lag to avoid
