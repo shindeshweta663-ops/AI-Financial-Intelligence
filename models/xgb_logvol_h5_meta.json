@@ -1,0 +1,123 @@
+{
+  "created_utc": "2026-10-16T11:42:31+00:00",
+  "task": "log of the realized daily volatility over the next 5 trading days",
+  "feature_columns": [
+    "ret_lag0",
+    "ret_lag1",
+    "ret_lag2",
+    "ret_lag3",
+    "ret_lag4",
+    "momentum_5",
+    "momentum_10",
+    "momentum_21",
+    "vol_5",
+    "vol_21",
+    "drawdown",
+    "rsi",
+    "macd_pct",
+    "macd_hist_pct",
+    "close_vs_sma20",
+    "close_vs_ema20",
+    "ema20_vs_ema50",
+    "volatility_stored",
+    "abs_ret_lag0",
+    "abs_ret_lag1",
+    "abs_ret_lag2",
+    "vol_63"
+  ],
+  "horizon": 5,
+  "xgboost_settings": {
+    "n_estimators": 800,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 50,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 5.0,
+    "objective": "reg:squarederror",
+    "eval_metric": "rmse",
+    "early_stopping_rounds": 50,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "best_iteration": 102,
+  "train_dates": [
+    "2022-01-10",
+    "2024-11-07"
+  ],
+  "val_dates": [
+    "2024-11-15",
+    "2025-10-22"
+  ],
+  "test_dates": [
+    "2025-10-30",
+    "2026-10-05"
+  ],
+  "metrics": {
+    "val": {
+      "training mean (constant)": {
+        "mae_log": 0.5007888619175489,
+        "rmse_log": 0.6273517845816666,
+        "r2": -0.006801162878265821,
+        "mae_vol_pts": 13.936650330057809
+      },
+      "linear on log 5/21/63-day vol": {
+        "mae_log": 0.4197194142709335,
+        "rmse_log": 0.5345295535740369,
+        "r2": 0.26908836237247546,
+        "mae_vol_pts": 11.725701597584989
+      },
+      "XGBoost": {
+        "mae_log": 0.3999289382836874,
+        "rmse_log": 0.5121753481226002,
+        "r2": 0.3289439817368418,
+        "mae_vol_pts": 11.06969386854887
+      },
+      "xgb_vs_linear": {
+        "relative": -0.08189173120659642,
+        "low": -0.13961485070199525,
+        "high": -0.03755186636056445,
+        "dates": 233
+      },
+      "xgb_vs_constant": {
+        "relative": -0.33347711245711315,
+        "low": -0.46347866067450405,
+        "high": -0.20937505895384217,
+        "dates": 233
+      }
+    },
+    "test": {
+      "training mean (constant)": {
+        "mae_log": 0.39185489055297423,
+        "rmse_log": 0.5081338237189597,
+        "r2": -0.0020255818956402827,
+        "mae_vol_pts": 10.216679956594314
+      },
+      "linear on log 5/21/63-day vol": {
+        "mae_log": 0.3647306312806598,
+        "rmse_log": 0.47126104837638094,
+        "r2": 0.13812220800881547,
+        "mae_vol_pts": 9.554505772672403
+      },
+      "XGBoost": {
+        "mae_log": 0.3675639164722433,
+        "rmse_log": 0.4746850109043868,
+        "r2": 0.12555270877912417,
+        "mae_vol_pts": 9.631819416866994
+      },
+      "xgb_vs_linear": {
+        "relative": 0.014583853240552974,
+        "low": -0.010805382138433557,
+        "high": 0.049536327727498025,
+        "dates": 233
+      },
+      "xgb_vs_constant": {
+        "relative": -0.12732039279217888,
+        "low": -0.20892963170522566,
+        "high": -0.01416374195879977,
+        "dates": 233
+      }
+    }
+  },
+  "note": "Test metrics are from a single evaluation. A volatility forecast, not a price prediction and not a guarantee."
+}
