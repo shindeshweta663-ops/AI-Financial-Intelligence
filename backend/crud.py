@@ -1,10 +1,18 @@
-﻿from datetime import datetime
+﻿from datetime import date, datetime
 from typing import List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import FinancialStatement, News, NewsSentiment, PriceHistory, Stock, TechnicalIndicator
+from models import (
+    EconomicIndicator,
+    FinancialStatement,
+    News,
+    NewsSentiment,
+    PriceHistory,
+    Stock,
+    TechnicalIndicator,
+)
 
 
 def _clean_symbol(symbol: str) -> str:
@@ -352,3 +360,94 @@ def upsert_price_bars(db: Session, stock_id: int, bars: list) -> tuple:
 
     db.commit()
     return inserted, updated
+
+# ---------- economic indicators ----------
+def add_economic_points(db: Session, points: list) -> tuple:
+    """Insert observations whose (name, country, date, source) is not stored yet.
+
+    Never updates or deletes stored rows. Returns (inserted, already_stored, differs),
+    where `differs` counts already-stored rows whose value differs from the new one
+    (providers sometimes revise values; we report it but keep the stored value).
+    """
+    if not points:
+        return 0, 0, 0
+
+    statement = select(EconomicIndicator).where(
+        EconomicIndicator.indicator_name.in_({p.indicator_name for p in points}),
+        EconomicIndicator.country.in_({p.country for p in points}),
+        EconomicIndicator.source.in_({p.source for p in points}),
+    )
+    existing = {
+        (r.indicator_name, r.country, r.indicator_date, r.source): r.value
+        for r in db.execute(statement).scalars().all()
+    }
+
+    inserted = already = differs = 0
+    for p in points:
+        key = (p.indicator_name, p.country, p.date, p.source)
+        if key in existing:
+            already += 1
+            stored = existing[key]
+            if stored is None or abs(float(stored) - p.value) > 0.0001:
+                differs += 1
+            continue
+        existing[key] = p.value  # also protects against duplicates inside `points`
+        db.add(
+            EconomicIndicator(
+                indicator_name=p.indicator_name,
+                country=p.country,
+                indicator_date=p.date,
+                value=p.value,
+                unit=p.unit,
+                source=p.source,
+            )
+        )
+        inserted += 1
+
+    db.commit()
+    return inserted, already, differs
+
+def list_economic_series(db: Session) -> list:
+    """One row per stored series: (country, name, unit, source, count, first, last)."""
+    statement = (
+        select(
+            EconomicIndicator.country,
+            EconomicIndicator.indicator_name,
+            EconomicIndicator.unit,
+            EconomicIndicator.source,
+            func.count(),
+            func.min(EconomicIndicator.indicator_date),
+            func.max(EconomicIndicator.indicator_date),
+        )
+        .group_by(
+            EconomicIndicator.country,
+            EconomicIndicator.indicator_name,
+            EconomicIndicator.unit,
+            EconomicIndicator.source,
+        )
+        .order_by(EconomicIndicator.country, EconomicIndicator.indicator_name)
+    )
+    return list(db.execute(statement).all())
+
+
+def get_economic_series(
+    db: Session,
+    country: str,
+    indicator_name: str,
+    start_year: Optional[int] = None,
+    end_year: Optional[int] = None,
+) -> List[EconomicIndicator]:
+    """Observations of one series, oldest first. Name match ignores upper/lower case."""
+    statement = (
+        select(EconomicIndicator)
+        .where(
+            EconomicIndicator.country == country.strip().upper(),
+            func.lower(EconomicIndicator.indicator_name) == indicator_name.strip().lower(),
+        )
+        .order_by(EconomicIndicator.indicator_date)
+    )
+    if start_year is not None:
+        statement = statement.where(EconomicIndicator.indicator_date >= date(start_year, 1, 1))
+    if end_year is not None:
+        statement = statement.where(EconomicIndicator.indicator_date <= date(end_year, 12, 31))
+    return list(db.execute(statement).scalars().all())

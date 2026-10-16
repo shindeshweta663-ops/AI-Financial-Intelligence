@@ -49,14 +49,15 @@ for country, code, name, unit in WORLD_BANK_SERIES:
             print(f"    {p.date}  {p.value:.4f}")
 
 print("\n=== 2. Pagination (same series with a tiny page size) ===")
-full = results.get(("USA", "NY.GDP.MKTP.KD.ZG"))
 try:
+    full = results.get(("USA", "NY.GDP.MKTP.KD.ZG")) or get_world_bank_series(
+        "USA", "NY.GDP.MKTP.KD.ZG", "x", "x"
+    )
     small = get_world_bank_series("USA", "NY.GDP.MKTP.KD.ZG", "x", "x", page_size=5)
     print(f"  page_size=5 needed {small.pages} page(s)")
     check(small.pages > 1, "more than one page was followed")
-    if full:
-        same = [(p.date, p.value) for p in small.points] == [(p.date, p.value) for p in full.points]
-        check(same, "paged result is identical to the single-page result")
+    same = [(p.date, p.value) for p in small.points] == [(p.date, p.value) for p in full.points]
+    check(same, "paged result is identical to the single-page result")
 except MarketDataError as error:
     check(False, f"pagination test failed: {error}")
 

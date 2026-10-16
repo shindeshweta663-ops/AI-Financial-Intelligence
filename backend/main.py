@@ -9,6 +9,7 @@ from config import settings
 from database import get_db
 
 from api import router as stocks_router
+from api_economic import router as economic_router
 
 
 # ---------- Response models (Pydantic) ----------
@@ -43,6 +44,7 @@ app = FastAPI(
 )
 
 app.include_router(stocks_router)
+app.include_router(economic_router)
 
 
 # ---------- Endpoints ----------
