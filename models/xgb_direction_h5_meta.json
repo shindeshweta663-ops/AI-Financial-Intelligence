@@ -1,0 +1,132 @@
+{
+  "created_utc": "2026-10-16T11:22:09+00:00",
+  "task": "direction of the close 5 trading day(s) ahead (1 = up)",
+  "feature_columns": [
+    "ret_lag0",
+    "ret_lag1",
+    "ret_lag2",
+    "ret_lag3",
+    "ret_lag4",
+    "momentum_5",
+    "momentum_10",
+    "momentum_21",
+    "vol_5",
+    "vol_21",
+    "drawdown",
+    "rsi",
+    "macd_pct",
+    "macd_hist_pct",
+    "close_vs_sma20",
+    "close_vs_ema20",
+    "ema20_vs_ema50",
+    "volatility_stored"
+  ],
+  "horizon": 5,
+  "xgboost_settings": {
+    "n_estimators": 600,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 20,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 5.0,
+    "eval_metric": "logloss",
+    "early_stopping_rounds": 40,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "best_iteration": 1,
+  "train_dates": [
+    "2022-01-07",
+    "2024-11-07"
+  ],
+  "val_dates": [
+    "2024-11-15",
+    "2025-10-22"
+  ],
+  "test_dates": [
+    "2025-10-30",
+    "2026-10-05"
+  ],
+  "metrics": {
+    "always_majority": {
+      "val": {
+        "accuracy": 0.5772532188841202,
+        "precision": 0.5772532188841202,
+        "recall": 1.0,
+        "f1": 0.7319727891156462,
+        "roc_auc": 0.5,
+        "log_loss": 0.6840595116127326,
+        "tn": 0,
+        "fp": 985,
+        "fn": 0,
+        "tp": 1345
+      },
+      "test": {
+        "accuracy": 0.5339055793991416,
+        "precision": 0.5339055793991416,
+        "recall": 1.0,
+        "f1": 0.6961387800783436,
+        "roc_auc": 0.5,
+        "log_loss": 0.6909072013179759,
+        "tn": 0,
+        "fp": 1086,
+        "fn": 0,
+        "tp": 1244
+      }
+    },
+    "logistic": {
+      "val": {
+        "accuracy": 0.5300429184549357,
+        "precision": 0.564499484004128,
+        "recall": 0.8133828996282528,
+        "f1": 0.6664636003655193,
+        "roc_auc": 0.4658887022814334,
+        "log_loss": 0.6941753916440928,
+        "tn": 141,
+        "fp": 844,
+        "fn": 251,
+        "tp": 1094
+      },
+      "test": {
+        "accuracy": 0.5489270386266094,
+        "precision": 0.547843331680714,
+        "recall": 0.8882636655948553,
+        "f1": 0.67770622508433,
+        "roc_auc": 0.5053442527816762,
+        "log_loss": 0.692246228683764,
+        "tn": 174,
+        "fp": 912,
+        "fn": 139,
+        "tp": 1105
+      }
+    },
+    "xgboost": {
+      "val": {
+        "accuracy": 0.5772532188841202,
+        "precision": 0.5772532188841202,
+        "recall": 1.0,
+        "f1": 0.7319727891156462,
+        "roc_auc": 0.5025961919498801,
+        "log_loss": 0.6838756203651428,
+        "tn": 0,
+        "fp": 985,
+        "fn": 0,
+        "tp": 1345
+      },
+      "test": {
+        "accuracy": 0.5339055793991416,
+        "precision": 0.5339055793991416,
+        "recall": 1.0,
+        "f1": 0.6961387800783436,
+        "roc_auc": 0.5036225447525655,
+        "log_loss": 0.6908398866653442,
+        "tn": 0,
+        "fp": 1086,
+        "fn": 0,
+        "tp": 1244
+      }
+    }
+  },
+  "note": "Test metrics are from a single evaluation. Not a guarantee of future results."
+}
