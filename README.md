@@ -16,12 +16,13 @@ frontend consumes this API.
 | 7 | FinBERT news sentiment | Done |
 | 8 | Economic indicators (World Bank, FRED) | Done |
 | 9 | Risk analysis | Done |
-| 10+ | Feature engineering, ML models, auth, portfolio, deployment | Planned |
+| 10-12 | Feature engineering, direction baseline, volatility forecast | Done (see "Machine learning findings") |
+| 13+ | SHAP, LSTM comparison, auth, portfolio, deployment | Planned |
 
 ## Tech Stack
 
-Python, FastAPI, SQLAlchemy 2.x, PostgreSQL, pandas/numpy, FinBERT
-(transformers + torch, CPU). Planned: XGBoost, LSTM, SHAP.
+Python, FastAPI, SQLAlchemy 2.x, PostgreSQL, pandas/numpy, scikit-learn,
+XGBoost, FinBERT (transformers + torch, CPU). Planned: LSTM, SHAP.
 
 ## Setup (Windows / PowerShell)
 
@@ -72,6 +73,7 @@ Interactive docs: http://127.0.0.1:8000/docs
 | GET | `/api/stocks/{symbol}/news` | Stored news with FinBERT scores |
 | GET | `/api/stocks/{symbol}/sentiment` | Aggregated sentiment, daily trend, recent articles |
 | GET | `/api/stocks/{symbol}/risk` | Historical risk measures: volatility, drawdown, VaR/CVaR, Sharpe, Sortino (optional `window`, `var_level`) |
+| GET | `/api/stocks/{symbol}/volatility-forecast` | Forecast of annualized volatility over the next 5 or 21 trading days (`horizon=5` or `21`), US stocks only |
 | GET | `/api/economic/indicators` | Catalog of stored economic series |
 | GET | `/api/economic/data` | One series (`country`, `indicator`, optional `start_year`, `end_year`) |
 
@@ -88,16 +90,88 @@ Interactive docs: http://127.0.0.1:8000/docs
 | `check_price_quality.py` | Read-only price sanity checks |
 | `check_economic.py` | Summary of the economic table, duplicate count |
 | `check_risk_independent.py` | Read-only loop-based recomputation of the risk measures, compared with `risk.py` |
-| `test_worldbank.py`, `test_fred.py`, `test_risk.py` | Tests (the first two need network, the last needs nothing) |
+| `check_feature_inputs.py` | Read-only audit of the data available for feature engineering |
+| `check_features.py`, `check_vol_baselines.py` | Read-only checks of the feature tables and of simple volatility baselines |
+| `train_xgb.py`, `train_vol_xgb.py` | Experiments: XGBoost for direction and for volatility (models saved to `models/`, not tracked in git) |
+| `walk_forward_vol.py [21]` | Robustness check: expanding-window comparison of XGBoost, the linear rule and a constant (5-day by default) |
+| `fit_vol_rule.py [5\|21]` | Fit the linear volatility rule on the stored data and save `models/linear_vol_h5.json` / `linear_vol_h21.json` |
+| `test_worldbank.py`, `test_fred.py` | Provider tests (need network) |
+| `test_risk.py`, `test_features.py`, `test_vol_features.py` | Tests that use no database or network |
 
 Loaders are safe to rerun: they insert only rows that are missing.
+
+## Machine learning findings
+
+All of this is analysis of past data. Nothing here is a guarantee, and none
+of it is investment advice.
+
+**Setup.** 10 US stocks, daily data from 2021 to 2026. Features for day T use
+only information available at the close of day T. Train, validation and test
+sets are split by date (60/20/20) with a gap equal to the forecast horizon,
+the same cut dates for every stock, and no shuffling.
+
+**1. Direction (next-day or 5-day up/down): no usable signal.** An
+"always predict up" baseline scores 51.7% (1-day) and 53.4% (5-day) on the
+test period. XGBoost stopped after one tree and predicted "up" for every row,
+with ROC-AUC 0.48 to 0.50 (no better than chance). Because there is no edge,
+there is no price-direction prediction endpoint and no SHAP explanation for
+that model.
+
+**2. Volatility (how large the next days' price swings are): forecastable.**
+The target is the realized volatility of the next 5 (primary) or 21 trading
+days, predicted in log space.
+
+| Horizon | Constant guess | Linear rule (test R2 / MAE) | XGBoost (test R2 / MAE) |
+|---|---|---|---|
+| 5 days | R2 -0.002, MAE 10.22 | R2 0.138, MAE 9.55 | R2 0.126, MAE 9.63 |
+| 21 days | | R2 0.228, MAE 6.98 | R2 0.222, MAE 7.17 |
+
+MAE is in annualized volatility percentage points. The linear rule uses only
+the log of the 5-day, 21-day and 63-day realized volatility.
+
+**3. Why the linear rule is served, not XGBoost.** A decision rule was fixed
+before looking at the results: serve XGBoost only if the pooled interval for
+"XGBoost vs linear rule" is entirely below zero AND XGBoost wins at least 4 of
+6 walk-forward folds. Results (squared error change, 95% interval from a block
+bootstrap by date):
+
+- 21 days: -3.0% (-9.4% to +2.5%), includes zero, XGBoost won 4 of 6 folds.
+- 5 days: -2.8% (-5.7% to -0.3%), XGBoost won only 3 of 6 folds.
+
+Neither horizon met both conditions, so the simpler, more stable linear rule
+is served. It beat the constant guess in all 6 folds at both horizons. The
+walk-forward folds include periods already seen in the single-split test, so
+they are a robustness check, not a fresh untouched test. Targets of
+neighbouring days overlap, so small differences should not be over-read.
+
+**4. Inputs that are NOT used, and why.**
+
+- *News sentiment*: stored news covers only 2026-09-06 to 2026-10-13 (about
+  25 trading days, roughly 2% of the price history), so it cannot be a
+  training feature. It is available through the `/sentiment` endpoint.
+- *Macro-economic series*: only about 60 monthly values per stock in the
+  training period, and the dates are the period covered, not the publication
+  date. World Bank annual values are published late.
+- *Financial statements*: about 5 annual reports per stock in the period and
+  no filing date stored.
+
+**5. Using the forecast.** `/volatility-forecast` returns the forecast, the
+stock's own recent 5/21/63-day volatility for context, the as-of date, and the
+typical error measured on the test period (about 9.6 volatility points for 5
+days and 7.0 for 21 days). Treat it as a rough level of risk, not a precise
+number. The forecast is a typical (median-style) value. The final coefficients
+are fitted on all labeled rows, so no untouched test set exists for that final
+fit; the reported errors come from the earlier test split. The forecast is as
+of the latest stored price, so refresh the data (`update_data.py ALL`) before
+relying on it.
 
 ## Data notes and limitations
 
 - **Prices**: Twelve Data free plan, US stocks only (8 requests/min, 800/day).
   Stored prices pass basic quality checks and appear split-adjusted.
 - **News**: Finnhub free plan, US companies only.
-- **NSE / Indian stocks**: no verified free data source yet, so none stored.
+- **NSE / Indian stocks**: no verified free data source yet, so none stored
+  and no forecasts for them.
 - **Sentiment**: FinBERT scores each article. The overall label uses the
   project's own thresholds (net score beyond +/-0.10), not a FinBERT rule.
 - **Risk**: computed from the stored split-adjusted closing prices, so the
