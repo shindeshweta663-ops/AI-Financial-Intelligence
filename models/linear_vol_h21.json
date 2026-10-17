@@ -1,0 +1,22 @@
+{
+  "type": "linear rule on log vol_5, vol_21, vol_63",
+  "horizon_days": 21,
+  "inputs": [
+    "vol_5",
+    "vol_21",
+    "vol_63"
+  ],
+  "intercept": -0.7473296893680237,
+  "coefficients": [
+    0.07436528590303891,
+    0.18085782569320574,
+    0.5642534960900224
+  ],
+  "min_vol": 1e-06,
+  "fitted_rows": 11720,
+  "first_training_date": "2022-01-10",
+  "last_training_date": "2026-09-11",
+  "test_r2": 0.2278,
+  "test_mae_vol_points": 6.98,
+  "test_note": "Measured on the 60/20/20 date split with a train-only fit, before the final refit on all rows. The refit has no untouched test set."
+}

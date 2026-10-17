@@ -11,6 +11,7 @@ from database import get_db
 from api import router as stocks_router
 from api_economic import router as economic_router
 from api_risk import router as risk_router
+from api_volatility import router as volatility_router
 
 
 # ---------- Response models (Pydantic) ----------
@@ -47,6 +48,7 @@ app = FastAPI(
 app.include_router(stocks_router)
 app.include_router(economic_router)
 app.include_router(risk_router)
+app.include_router(volatility_router)
 
 
 # ---------- Endpoints ----------
