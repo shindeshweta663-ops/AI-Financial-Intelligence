@@ -98,6 +98,8 @@ Select-String -Path ..\README.md -Pattern '^\| (GET|POST|DELETE)' | ForEach-Obje
 | GET | `/api/stocks/search` | Search stocks by symbol or company name (`q`, optional `limit`); returns `{"results": [{symbol, name, exchange}]}` |
 | GET | `/api/stocks/{symbol}/history` | Daily price history (`range=1M`, `3M`, `6M` or `1Y`, or `limit` for a number of trading days) |
 | GET | `/api/market/overview` | Market status (open/closed, US hours, holidays ignored) and equal-weighted "tracked stocks" indices (US, India) built from stored prices, not official indices. Stocks with no stored prices (currently the NSE ones) are left out |
+| GET | `/api/stocks/screener` | Stock Opportunities list: price, 1-day change, annualised volatility, risk level (Low/Medium/High) and a trend-rule signal from past prices (not a forecast). Stocks without stored prices are listed in `skipped_no_prices` |
+| GET | `/api/stocks/screener` | Stock Opportunities list: price, 1-day change, annualised volatility, risk level (Low/Medium/High) and a trend-rule signal from past prices (not a forecast). Stocks without stored prices are listed in `skipped_no_prices` |
 
 **Authentication notes.** Passwords are stored only as bcrypt hashes. A successful login sets a signed token in an HttpOnly cookie named `fn_session`. The `frontend` folder is served at http://127.0.0.1:8000/app/ so the pages and the API share one address. The subscription `plan` is derived (`premium` only when the stored status is `active`); there is no plan column yet. Not yet implemented: forgot-password and login rate limiting. `change-password` has not been tested end to end.
 

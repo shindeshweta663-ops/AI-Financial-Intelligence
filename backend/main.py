@@ -19,6 +19,7 @@ from api_volatility import router as volatility_router
 from api_watchlist import router as watchlist_router
 from api_market import router as market_router
 from api_payment import router as payment_router
+from api_screener import router as screener_router
 
 
 
@@ -57,6 +58,7 @@ app.include_router(auth_router)
 # search must be included BEFORE stocks_router, so "/api/stocks/search" is not
 # mistaken for "/api/stocks/{symbol}".
 app.include_router(search_router)
+app.include_router(screener_router)
 app.include_router(stocks_router)
 app.include_router(economic_router)
 app.include_router(risk_router)
@@ -64,6 +66,7 @@ app.include_router(volatility_router)
 app.include_router(watchlist_router)
 app.include_router(market_router)
 app.include_router(payment_router) 
+
 # Serve the frontend pages from the same address as the API (at /app/), so the
 # login cookie works without cross-site settings.
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
