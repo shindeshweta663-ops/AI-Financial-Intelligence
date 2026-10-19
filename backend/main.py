@@ -20,6 +20,7 @@ from api_watchlist import router as watchlist_router
 from api_market import router as market_router
 from api_payment import router as payment_router
 from api_screener import router as screener_router
+from api_predictions import router as predictions_router
 
 
 
@@ -66,6 +67,7 @@ app.include_router(volatility_router)
 app.include_router(watchlist_router)
 app.include_router(market_router)
 app.include_router(payment_router) 
+app.include_router(predictions_router)
 
 # Serve the frontend pages from the same address as the API (at /app/), so the
 # login cookie works without cross-site settings.
