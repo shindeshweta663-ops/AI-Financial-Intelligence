@@ -48,6 +48,12 @@ class PathPoint(BaseModel):
     upper: float
 
 
+class FactorOut(BaseModel):
+    name: str
+    impact: str  # "neutral": these describe risk level, not direction
+    description: str
+
+
 class ForecastOut(BaseModel):
     prediction_id: Optional[int] = None
     symbol: str
@@ -64,7 +70,7 @@ class ForecastOut(BaseModel):
     model: str
     forecast_volatility_pct: float
     recent_volatility_pct: dict
-    factors: List[str]
+    factors: List[FactorOut]
     forecast_path: List[PathPoint]
     notes: List[str]
 
@@ -134,11 +140,23 @@ def forecast(req: ForecastRequest, db: Session = Depends(get_db), user=Depends(g
 
     rec = {k: round(vol_to_fraction(float(v)) * 100, 1) for k, v in vf.recent_volatility.items()}
     factors = [
-        f"Forecast volatility: {vol * 100:.1f}% a year over the next {vf.horizon_days} trading days.",
-        "Recent volatility: " + ", ".join(f"{k} {v}%" for k, v in rec.items()) + ".",
+        FactorOut(
+            name="Forecast volatility",
+            impact="neutral",
+            description=f"{vol * 100:.1f}% a year over the next {vf.horizon_days} trading days. This sets the width of the range.",
+        ),
+        FactorOut(
+            name="Recent volatility",
+            impact="neutral",
+            description="The stock's own past swings: " + ", ".join(f"{k} {v}%" for k, v in rec.items()) + ".",
+        ),
     ]
     if vf.model.typical_error_vol_points is not None:
-        factors.append(f"Typical model miss on a test period: about {vf.model.typical_error_vol_points:.1f} volatility points.")
+        factors.append(FactorOut(
+            name="Model accuracy",
+            impact="neutral",
+            description=f"On a test period the volatility forecast missed by about {vf.model.typical_error_vol_points:.1f} volatility points on average.",
+        ))
 
     notes = [
         "This is a volatility-based range, not a price prediction. No direction (up or down) is forecast.",
