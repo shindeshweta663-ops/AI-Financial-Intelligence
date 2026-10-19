@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -9,6 +11,7 @@ from config import settings
 from database import get_db
 
 from api import router as stocks_router
+from api_auth import router as auth_router
 from api_economic import router as economic_router
 from api_risk import router as risk_router
 from api_volatility import router as volatility_router
@@ -45,10 +48,17 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+app.include_router(auth_router)
 app.include_router(stocks_router)
 app.include_router(economic_router)
 app.include_router(risk_router)
 app.include_router(volatility_router)
+
+# Serve the frontend pages from the same address as the API (at /app/), so the
+# login cookie works without cross-site settings.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+if FRONTEND_DIR.is_dir():
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
 # ---------- Endpoints ----------

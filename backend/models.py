@@ -20,6 +20,15 @@ class User(Base):
     password_hash: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[Optional[dt.datetime]] = mapped_column(DateTime)
 
+    # Subscription columns. They already exist in the database (all nullable; the
+    # database fills subscription_status='inactive' and payment_status='pending'
+    # when they are not given). This only maps them; it does not change the table.
+    subscription_status: Mapped[Optional[str]] = mapped_column(String(20))
+    start_date: Mapped[Optional[dt.datetime]] = mapped_column(DateTime)
+    expiry_date: Mapped[Optional[dt.datetime]] = mapped_column(DateTime)
+    payment_status: Mapped[Optional[str]] = mapped_column(String(20))
+    payment_id: Mapped[Optional[str]] = mapped_column(String(150))
+
     portfolio_items: Mapped[List["Portfolio"]] = relationship(back_populates="user")
     watchlist_items: Mapped[List["Watchlist"]] = relationship(back_populates="user")
     transactions: Mapped[List["PortfolioTransaction"]] = relationship(back_populates="user")

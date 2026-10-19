@@ -26,6 +26,11 @@ class Settings:
     news_api_key: str = os.getenv("NEWS_API_KEY", "")
     fred_api_key: str = os.getenv("FRED_API_KEY", "")
 
+    # Login (see auth.py). The secret signs the login cookie; keep it only in .env.
+    jwt_secret: str = os.getenv("JWT_SECRET", "")
+    # Set COOKIE_SECURE=true in .env when the site is served over HTTPS.
+    cookie_secure: bool = os.getenv("COOKIE_SECURE", "false").strip().lower() == "true"
+
 
 settings = Settings()
 
