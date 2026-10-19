@@ -658,8 +658,8 @@
     <script>
       /* ===== FININTEL - Payment page =====
 
-         BACKEND CONTRACT (for the Flask + PostgreSQL developer)
-         -------------------------------------------------------
+         BACKEND CONTRACT (FastAPI + PostgreSQL)
+         ---------------------------------------
          1. POST  /api/payment/create-order
             body: { "plan": "annual", "method": "upi" | "qr" }
             The server decides the amount (never trust the browser), creates a
@@ -676,7 +676,6 @@
 
          4. (Optional) GET /api/payment/status?order_id=order_xxx
             replies { "status": "pending" | "success" | "failed" }
-            Useful if the user closes the window and the webhook confirms later.
 
          This file never activates a subscription and never shows success
          unless the server says so. */
@@ -730,24 +729,16 @@
         });
       });
 
-      /* ---- Small helper: JSON request to the Flask backend ---- */
+      /* ---- Small helper: JSON request to the FastAPI backend ---- */
       async function api(url, options) {
         const res = await fetch(url, {
           headers: { "Content-Type": "application/json" },
-          credentials: "same-origin", // keeps the Flask login session cookie
+          credentials: "same-origin", // sends the fn_session login cookie
           ...options,
         });
         if (!res.ok) throw new Error("Server responded with " + res.status);
         return res.json();
       }
-
-      /* =========================================================
-         RAZORPAY INTEGRATION PLACEHOLDER (to be completed with the
-         Flask backend). The create-order call, the Razorpay Checkout
-         window and the server verification below are wired up but
-         stay inactive until the /api/payment/* routes exist.
-         No fake QR and no fake success is ever shown.
-         ========================================================= */
 
       /* ---- Load Razorpay Checkout only when it is needed ---- */
       function loadRazorpay() {
@@ -777,8 +768,8 @@
             setStatus("success", "Payment confirmed. Your subscription is active.");
             $("#payLabel").textContent = "Payment complete";
             $("#payBtn").disabled = true;
-            // Optional: send the user on after a moment, e.g.
-            // setTimeout(() => (location.href = "dashboard.html"), 2000);
+            // Open the user dashboard after the server-confirmed success
+            setTimeout(() => (location.href = "userdashboard.html"), 1500);
           } else if (r.status === "pending") {
             setStatus("pending", "Payment received. Waiting for confirmation...");
             busy = false;
@@ -841,7 +832,11 @@
           setStatus("pending", "Complete the payment in the Razorpay window.");
           rzp.open();
         } catch (err) {
-          // Shown while the backend is not connected yet
+          // Not logged in: go to login, then come back to this page
+          if (String(err.message).includes("401")) {
+            location.href = "login.html?next=payment.html";
+            return;
+          }
           setStatus("failed", "Payment service is not available right now. Please try again later.");
           busy = false;
           $("#payBtn").disabled = false;

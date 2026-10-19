@@ -1072,7 +1072,7 @@
             if (i.closest(".fld").classList.contains("bad")) checkField(i);
           });
         });
-        form.addEventListener("submit", (e) => {
+        form.addEventListener("submit", async (e) => {
           e.preventDefault();
           const results = inputs.map(checkField);
           const btn = form.querySelector("button[type=submit]");
@@ -1083,13 +1083,82 @@
             inputs[results.indexOf(false)].focus();
             return;
           }
-          // TODO: connect to the backend here (send form values to the API).
+
+          /* ---- Connected to the backend ---- */
+          const isReg = form === forms.register;
           const note = form.querySelector(".note");
-          note.textContent =
-            form === forms.register
-              ? "Details look good. Account creation connects to the backend next."
-              : "Details look good. Login connects to the backend next.";
-          note.classList.add("show");
+          const show = (t) => {
+            note.textContent = t;
+            note.classList.add("show");
+          };
+          btn.disabled = true;
+          show(isReg ? "Creating your account..." : "Logging in...");
+          try {
+            const body = isReg
+              ? {
+                  name: document.getElementById("rName").value.trim(),
+                  email: document.getElementById("rEmail").value.trim(),
+                  password: document.getElementById("rPass").value,
+                }
+              : {
+                  email: document.getElementById("lEmail").value.trim(),
+                  password: document.getElementById("lPass").value,
+                  remember: forms.login.querySelector("input[type=checkbox]")
+                    .checked,
+                };
+            const res = await fetch(
+              isReg ? "/api/auth/register" : "/api/auth/login",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(body),
+              },
+            );
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              const d = data.detail;
+              show(
+                typeof d === "string"
+                  ? d
+                  : Array.isArray(d) && d[0] && d[0].msg
+                    ? d[0].msg
+                    : "Something went wrong. Please try again.",
+              );
+              btn.disabled = false;
+              return;
+            }
+
+            // Where to go next: ?next= page, else dashboard (premium) or subscription
+            let premium = false;
+            try {
+              const me = await fetch("/api/auth/me", {
+                credentials: "same-origin",
+              });
+              if (me.ok) {
+                const u = await me.json();
+                premium =
+                  (u.subscription && u.subscription.plan === "premium") ||
+                  u.plan === "premium";
+              }
+            } catch (_) {}
+            const next = new URLSearchParams(location.search).get("next");
+            const safeNext =
+              next && /^[a-z0-9_-]+\.html$/i.test(next) ? next : null;
+            show(
+              isReg
+                ? "Account created. Redirecting..."
+                : "Logged in. Redirecting...",
+            );
+            location.href =
+              safeNext ||
+              (premium ? "userdashboard.html" : "subscription.html");
+          } catch (err) {
+            show(
+              "Could not reach the server. Open this page at http://127.0.0.1:8000/app/login.html",
+            );
+            btn.disabled = false;
+          }
         });
       });
       document.getElementById("forgot").addEventListener("click", () => {
