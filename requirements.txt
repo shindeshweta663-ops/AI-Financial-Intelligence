@@ -27,3 +27,4 @@ transformers==5.19.0
 # Authentication
 bcrypt==5.0.0
 PyJWT==2.15.1
+razorpay==2.0.1

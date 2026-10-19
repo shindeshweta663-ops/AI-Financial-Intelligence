@@ -94,9 +94,10 @@ http://127.0.0.1:8000/app/.
 | GET | `/api/watchlist` | The logged-in user's watchlist with latest stored price and 1-day change (login required) |
 | POST | `/api/watchlist` | Add a stock: `{"symbol": "AAPL"}` (409 if already added, 400 if not tracked) |
 | DELETE | `/api/watchlist/{symbol}` | Remove a stock from the watchlist (safe to repeat) |
-
+Select-String -Path ..\README.md -Pattern '^\| (GET|POST|DELETE)' | ForEach-Object { "$($_.LineNumber): $($_.Line.Trim())" }
 | GET | `/api/stocks/search` | Search stocks by symbol or company name (`q`, optional `limit`); returns `{"results": [{symbol, name, exchange}]}` |
 | GET | `/api/stocks/{symbol}/history` | Daily price history (`range=1M`, `3M`, `6M` or `1Y`, or `limit` for a number of trading days) |
+| GET | `/api/market/overview` | Market status (open/closed, US hours, holidays ignored) and equal-weighted "tracked stocks" indices (US, India) built from stored prices, not official indices. Stocks with no stored prices (currently the NSE ones) are left out |
 
 **Authentication notes.** Passwords are stored only as bcrypt hashes. A successful login sets a signed token in an HttpOnly cookie named `fn_session`. The `frontend` folder is served at http://127.0.0.1:8000/app/ so the pages and the API share one address. The subscription `plan` is derived (`premium` only when the stored status is `active`); there is no plan column yet. Not yet implemented: forgot-password and login rate limiting. `change-password` has not been tested end to end.
 

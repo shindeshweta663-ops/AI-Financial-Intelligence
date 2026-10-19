@@ -17,6 +17,9 @@ from api_risk import router as risk_router
 from api_search import router as search_router
 from api_volatility import router as volatility_router
 from api_watchlist import router as watchlist_router
+from api_market import router as market_router
+from api_payment import router as payment_router
+
 
 
 # ---------- Response models (Pydantic) ----------
@@ -59,7 +62,8 @@ app.include_router(economic_router)
 app.include_router(risk_router)
 app.include_router(volatility_router)
 app.include_router(watchlist_router)
-
+app.include_router(market_router)
+app.include_router(payment_router) 
 # Serve the frontend pages from the same address as the API (at /app/), so the
 # login cookie works without cross-site settings.
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
