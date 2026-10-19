@@ -103,6 +103,8 @@ Select-String -Path ..\README.md -Pattern '^\| (GET|POST|DELETE)' | ForEach-Obje
 | GET | `/api/predictions/config` | Forecast horizons the model supports (`{"horizons": [5, 21]}`) |
 | POST | `/api/predictions/forecast` | Volatility-based forecast for one stock: `{"symbol": "AAPL", "horizon_days": 21}`. Returns the last close as a no-direction central price plus an 80% range from forecast volatility. Not a price prediction. Login required; US stocks only |
 | GET/POST | `/api/predictions/history` | Saved forecasts. GET returns an empty list and POST returns 501 until a database change for per-user history is approved |
+| GET | `/api/payments` | The logged-in user's latest recorded payment (the database stores only the latest one; amount comes from the single annual plan price). Login required |
+| GET | `/api/notifications` | Notices worked out from the user's subscription (inactive, ending within 7 days, expired); an empty list when there is nothing to report. Login required |
 
 **Authentication notes.** Passwords are stored only as bcrypt hashes. A successful login sets a signed token in an HttpOnly cookie named `fn_session`. The `frontend` folder is served at http://127.0.0.1:8000/app/ so the pages and the API share one address. The subscription `plan` is derived (`premium` only when the stored status is `active`); there is no plan column yet. Not yet implemented: forgot-password and login rate limiting. `change-password` has not been tested end to end.
 
