@@ -3,11 +3,13 @@
 Run from the backend folder:
     python update_data.py AAPL          one stock
     python update_data.py AAPL MSFT     several stocks
-    python update_data.py ALL           every US stock in the database
+    python update_data.py ALL           every covered stock in the database
 
 Safe to re-run. It never deletes anything, skips unfinished trading days,
 and reports a failure instead of pretending a failed provider call worked.
-US stocks only (NASDAQ/NYSE), like load_news.py.
+Prices and indicators: US stocks (NASDAQ/NYSE) via Twelve Data, Indian stocks
+(NSE/BSE) via Yahoo Finance. News and sentiment: US stocks only, because the
+news search is by ticker and a short Indian ticker could match another company.
 """
 import sys
 import time
@@ -31,9 +33,11 @@ from crud import (
 from database import SessionLocal
 from indicators import compute_indicators
 from market_data import MarketDataError, get_daily_history_twelve_data
+from market_data_yf import YF_SUFFIX, get_daily_history_yfinance
 from news_service import get_company_news_history
 
 US_EXCHANGES = {"NASDAQ", "NYSE"}
+COVERED_EXCHANGES = US_EXCHANGES | set(YF_SUFFIX)  # prices and indicators; news stays US-only
 NEW_YORK = ZoneInfo("America/New_York")
 COLUMNS = ["sma20", "ema20", "ema50", "rsi", "macd", "macd_signal", "volatility"]
 SCORE_BATCH = 64
@@ -53,10 +57,15 @@ def is_complete_day(bar_date: datetime) -> bool:
 def update_prices(db, stock) -> tuple:
     latest = get_price_history(db, stock.stock_id, limit=1)
     gap_days = (datetime.now() - latest[-1].date).days if latest else None
-    size = 1250 if gap_days is None or gap_days > 35 else 30
+    long_gap = gap_days is None or gap_days > 35
 
-    bars = get_daily_history_twelve_data(stock.symbol, outputsize=size)
-    complete = [b for b in bars if is_complete_day(b.date)]
+    if stock.exchange in YF_SUFFIX:
+        # the Yahoo loader already drops today's unfinished bar (India time)
+        bars = get_daily_history_yfinance(stock.symbol, stock.exchange, period="5y" if long_gap else "3mo")
+        complete = bars
+    else:
+        bars = get_daily_history_twelve_data(stock.symbol, outputsize=1250 if long_gap else 30)
+        complete = [b for b in bars if is_complete_day(b.date)]
     inserted, updated = upsert_price_bars(db, stock.stock_id, complete)
     return len(bars), inserted, updated, len(bars) - len(complete)
 
@@ -64,7 +73,7 @@ def update_prices(db, stock) -> tuple:
 def update_indicators(db, stock) -> int:
     rows = [
         r for r in get_price_history(db, stock.stock_id, limit=5000)
-        if is_complete_day(r.date)
+        if stock.exchange in YF_SUFFIX or is_complete_day(r.date)
     ]
     if not rows:
         return 0
@@ -81,6 +90,8 @@ def update_indicators(db, stock) -> int:
 
 
 def update_news(db, stock) -> tuple:
+    if stock.exchange not in US_EXCHANGES:
+        return None  # news search is by ticker, which could match another company for Indian stocks
     latest = get_news(db, stock.stock_id, limit=1)
     if latest:
         now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -125,13 +136,13 @@ def run_step(db, stock, label, fn, failures):
 
 def pick_stocks(db, names) -> list:
     if names == ["ALL"]:
-        return [s for s in list_stocks(db) if s.exchange in US_EXCHANGES]
+        return [s for s in list_stocks(db) if s.exchange in COVERED_EXCHANGES]
     stocks = []
     for name in names:
         stock = get_stock_by_symbol(db, name)
         if not stock:
             print(f"{name}: not in the stocks table, skipped")
-        elif stock.exchange not in US_EXCHANGES:
+        elif stock.exchange not in COVERED_EXCHANGES:
             print(f"{name}: exchange {stock.exchange} is not covered by this updater, skipped")
         else:
             stocks.append(stock)
@@ -158,10 +169,13 @@ def main() -> None:
             if r is not None:
                 print(f"  indicators: inserted {r}")
 
-            r = run_step(db, stock, "news", lambda: update_news(db, stock), failures)
-            if r:
-                days, fetched, inserted = r
-                print(f"  news:       looked back {days} days, fetched {fetched}, inserted {inserted}")
+            if stock.exchange in US_EXCHANGES:
+                r = run_step(db, stock, "news", lambda: update_news(db, stock), failures)
+                if r:
+                    days, fetched, inserted = r
+                    print(f"  news:       looked back {days} days, fetched {fetched}, inserted {inserted}")
+            else:
+                print("  news:       skipped (news search is by ticker, so only US stocks are covered)")
 
             time.sleep(1)
 
@@ -182,4 +196,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    
