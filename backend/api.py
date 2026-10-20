@@ -258,6 +258,15 @@ def get_stock_quote(
     """
 
     stock = _get_stock_or_404(db, symbol)
+    if stock.exchange in ("NSE", "BSE"):
+        # Live quotes for Indian exchanges need a paid Twelve Data plan: use the latest stored daily close
+        from crud import get_price_history as _stored_history
+        from stored_quote import quote_from_stored_bars
+
+        bars = _stored_history(db, stock.stock_id, limit=2)
+        if not bars:
+            raise HTTPException(status_code=422, detail=f"No price history stored for {stock.symbol} yet")
+        return quote_from_stored_bars(stock, bars)
 
     try:
         return get_latest_quote(stock.symbol)
