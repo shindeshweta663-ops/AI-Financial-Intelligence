@@ -14,6 +14,7 @@ from api import router as stocks_router
 from api_auth import router as auth_router
 from api_economic import router as economic_router
 from api_risk import router as risk_router
+from api_search import router as search_router
 from api_volatility import router as volatility_router
 
 
@@ -49,6 +50,9 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+# search must be included BEFORE stocks_router, so "/api/stocks/search" is not
+# mistaken for "/api/stocks/{symbol}".
+app.include_router(search_router)
 app.include_router(stocks_router)
 app.include_router(economic_router)
 app.include_router(risk_router)

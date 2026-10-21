@@ -91,6 +91,7 @@ http://127.0.0.1:8000/app/.
 | GET | `/api/auth/me` | Current user and subscription info (requires login) |
 | POST | `/api/auth/logout` | End the session |
 | POST | `/api/auth/change-password` | Change password (requires login) |
+| GET | `/api/stocks/search` | Search stocks by symbol or company name (`q`, optional `limit`); returns `{"results": [{symbol, name, exchange}]}` |
 
 **Authentication notes.** Passwords are stored only as bcrypt hashes. A successful login sets a signed token in an HttpOnly cookie named `fn_session`. The `frontend` folder is served at http://127.0.0.1:8000/app/ so the pages and the API share one address. The subscription `plan` is derived (`premium` only when the stored status is `active`); there is no plan column yet. Not yet implemented: forgot-password and login rate limiting. `change-password` has not been tested end to end.
 
