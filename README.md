@@ -17,12 +17,14 @@ frontend consumes this API.
 | 8 | Economic indicators (World Bank, FRED) | Done |
 | 9 | Risk analysis | Done |
 | 10-12 | Feature engineering, direction baseline, volatility forecast | Done (see "Machine learning findings") |
-| 13+ | SHAP, LSTM comparison, auth, portfolio, deployment | Planned |
+| 15 | Authentication: register, login, logout, session cookie | Done (frontend pages not yet connected) |
+| 13+ | SHAP, LSTM comparison, portfolio, deployment | Planned |
 
 ## Tech Stack
 
 Python, FastAPI, SQLAlchemy 2.x, PostgreSQL, pandas/numpy, scikit-learn,
-XGBoost, FinBERT (transformers + torch, CPU). Planned: LSTM, SHAP.
+XGBoost, FinBERT (transformers + torch, CPU), bcrypt and PyJWT
+(authentication). Planned: LSTM, SHAP.
 
 ## Setup (Windows / PowerShell)
 
@@ -36,7 +38,10 @@ pip install -r ..\requirements.txt
 1. Create a PostgreSQL database named `financial_intelligence`.
 2. Copy `.env.example` to `.env` in the project root and fill in real values.
    Never commit `.env`.
-3. Run every Python script from the `backend` folder.
+3. Set `JWT_SECRET` in `.env` to a long random value (32+ characters). One way
+   to make one: `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+   Keep it private and do not share it.
+4. Run every Python script from the `backend` folder.
 
 ### Environment variables
 
@@ -48,6 +53,8 @@ pip install -r ..\requirements.txt
 | `FRED_API_KEY` | Federal Reserve economic data (free key) |
 | `SEC_USER_AGENT` | Identification string for SEC requests |
 | `NEWS_API_KEY` | Optional, currently unused |
+| `JWT_SECRET` | Signs login cookies. Required for login: a long random value (32+ characters). Never commit it. |
+| `COOKIE_SECURE` | `true` when served over HTTPS (production). `false` for local http (default). |
 
 Run `python check_keys.py` to confirm keys are set (it never prints them).
 
@@ -59,6 +66,9 @@ uvicorn main:app --reload
 ```
 
 Interactive docs: http://127.0.0.1:8000/docs
+
+The `frontend` folder is served from the same server at
+http://127.0.0.1:8000/app/.
 
 ## Endpoints
 
@@ -76,6 +86,13 @@ Interactive docs: http://127.0.0.1:8000/docs
 | GET | `/api/stocks/{symbol}/volatility-forecast` | Forecast of annualized volatility over the next 5 or 21 trading days (`horizon=5` or `21`), US stocks only |
 | GET | `/api/economic/indicators` | Catalog of stored economic series |
 | GET | `/api/economic/data` | One series (`country`, `indicator`, optional `start_year`, `end_year`) |
+| POST | `/api/auth/register` | Create an account (name, email, password of 8+ characters) and log in |
+| POST | `/api/auth/login` | Log in (`remember: true` keeps the session 30 days instead of 1 day) |
+| GET | `/api/auth/me` | Current user and subscription info (requires login) |
+| POST | `/api/auth/logout` | End the session |
+| POST | `/api/auth/change-password` | Change password (requires login) |
+
+**Authentication notes.** Passwords are stored only as bcrypt hashes. A successful login sets a signed token in an HttpOnly cookie named `fn_session`. The `frontend` folder is served at http://127.0.0.1:8000/app/ so the pages and the API share one address. The subscription `plan` is derived (`premium` only when the stored status is `active`); there is no plan column yet. Not yet implemented: forgot-password and login rate limiting. `change-password` has not been tested end to end.
 
 ## Data scripts
 
@@ -189,8 +206,9 @@ relying on it.
   absent, never as 0. Stored values are never overwritten, so later revisions
   by the source are not picked up.
 - **FRED rate limit**: not verified. The client waits 2 seconds between calls.
-- **Known schema gap**: the `users` table has extra columns (expiry_date,
-  payment_id, payment_status, start_date, subscription_status) not mapped in
-  `models.py`. To be resolved before authentication work.
+- **Users table**: `models.py` now maps the extra subscription and payment
+  columns (`subscription_status`, `start_date`, `expiry_date`,
+  `payment_status`, `payment_id`). There is no plan-name column, so the plan
+  returned by `/api/auth/me` is derived.
 - `economic_indicators` has no database UNIQUE constraint; duplicates are
   prevented in code.
