@@ -183,6 +183,10 @@ def get_stock(
     )
 
 
+# Dashboard range buttons -> number of latest trading days
+HISTORY_RANGES = {"1M": 21, "3M": 63, "6M": 126, "1Y": 252}
+
+
 @router.get(
     "/{symbol}/history",
     response_model=HistoryOut,
@@ -193,11 +197,25 @@ def get_stock_history(
         365,
         ge=1,
         le=1500,
-        description="Number of latest trading days",
+        description="Number of latest trading days (ignored when range is given)",
+    ),
+    range_: Optional[str] = Query(
+        None,
+        alias="range",
+        description="1M, 3M, 6M or 1Y (21, 63, 126, 252 trading days). Overrides limit.",
     ),
     db: Session = Depends(get_db),
 ):
     """Return daily OHLCV prices, oldest first."""
+
+    if range_ is not None:
+        days = HISTORY_RANGES.get(range_.strip().upper())
+        if days is None:
+            raise HTTPException(
+                status_code=422,
+                detail="range must be one of 1M, 3M, 6M, 1Y",
+            )
+        limit = days
 
     stock = _get_stock_or_404(db, symbol)
 
