@@ -91,6 +91,10 @@ http://127.0.0.1:8000/app/.
 | GET | `/api/auth/me` | Current user and subscription info (requires login) |
 | POST | `/api/auth/logout` | End the session |
 | POST | `/api/auth/change-password` | Change password (requires login) |
+| GET | `/api/watchlist` | The logged-in user's watchlist with latest stored price and 1-day change (login required) |
+| POST | `/api/watchlist` | Add a stock: `{"symbol": "AAPL"}` (409 if already added, 400 if not tracked) |
+| DELETE | `/api/watchlist/{symbol}` | Remove a stock from the watchlist (safe to repeat) |
+
 | GET | `/api/stocks/search` | Search stocks by symbol or company name (`q`, optional `limit`); returns `{"results": [{symbol, name, exchange}]}` |
 | GET | `/api/stocks/{symbol}/history` | Daily price history (`range=1M`, `3M`, `6M` or `1Y`, or `limit` for a number of trading days) |
 

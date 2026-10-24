@@ -16,6 +16,7 @@ from api_economic import router as economic_router
 from api_risk import router as risk_router
 from api_search import router as search_router
 from api_volatility import router as volatility_router
+from api_watchlist import router as watchlist_router
 
 
 # ---------- Response models (Pydantic) ----------
@@ -57,6 +58,7 @@ app.include_router(stocks_router)
 app.include_router(economic_router)
 app.include_router(risk_router)
 app.include_router(volatility_router)
+app.include_router(watchlist_router)
 
 # Serve the frontend pages from the same address as the API (at /app/), so the
 # login cookie works without cross-site settings.
